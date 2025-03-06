@@ -67,10 +67,13 @@ prompt = f"I have a time series length of 256: <ts><ts/>. Please analyze the loc
 prompt = f"<|im_start|>system\nYou are a helpful assistant.<|im_end|><|im_start|>user\n{prompt}<|im_end|><|im_start|>assistant\n"
 # Convert to tensor
 inputs = processor(text=[prompt], timeseries=[timeseries], padding=True, return_tensors="pt")
+# Move to GPU
+inputs = {k: v.to(0) for k, v in inputs.items()}
 # Model Generate
 outputs = model.generate(**inputs, max_new_tokens=300)
 print(tokenizer.decode(outputs[0][len(inputs['input_ids'][0]):], skip_special_tokens=True))
 ```
+- **Note:** Due to training data limitations, the recommended time series length for ChatTS ranges from **64 to 1024**, with a maximum of **30** series in one input. Currently, time series that are too short (i.e., shorter than 64) may not be correctly recognized by ChatTS. We will improve this in future updates.
 
 ### vLLM Inference (Experimental)
 Since [vLLM](https://github.com/vllm-project/vllm) lacks native support for the `ChatTS` model, we have provided a [patch](chatts/vllm/chatts_vllm.py) to enable vLLM to support inference. Therefore, before using vLLM to load the model, please make sure that the code includes: `import chatts.vllm.chatts_vllm` to register the ChatTS model in vLLM. Please refer to the following steps to use vLLM to load ChatTS:

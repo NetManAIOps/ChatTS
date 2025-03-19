@@ -36,7 +36,7 @@ This repository provides several toolkits for generating synthetic data with the
 - Simple demos for inference: `demo_hf.ipynb` and `demo_vllm.py`.
 - A trained `ChatTS` model (fine-tuned based on a modified version of QWen2.5-14B-Instruct) at [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-FFD21E)](https://huggingface.co/bytedance-research/ChatTS-14B).
 - Evaluations datasets: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14349206.svg)](https://doi.org/10.5281/zenodo.14349206).
-- Training scripts for training your own model: [ChatTS-Training](https://github.com/xiezhe-24/ChatTS-Training).
+- **Training scripts**: [ChatTS-Training](https://github.com/xiezhe-24/ChatTS-Training).
 
 ## How To Use
 ### Installation
@@ -115,6 +115,7 @@ deepspeed --num_gpus [YOUR_NUM_GPUS] --master_port 12345 chatts/inference_tsmllm
 You should find the inference results under `exp/` folder, which will be further used for evaluation.
 
 ### Evaluation
+- Generate the inference results of `ChatTS` by following the steps in `Deepspeed Model Inference for Evaluation`.
 - Install `ragas==0.1.9` (https://github.com/explodinggradients/ragas), which is used for evaluating the inductive reasoning results.
 - Set the `API_KEY` and `OPENAI_URL` in `evaluation/ragas/config/config.toml` (Refer to https://platform.openai.com/docs/api-reference).
 - Run `python3 -m evaluation.evaluate_tsmllm_models` to evaluate `ChatTS` (make sure you have done the model inference before).

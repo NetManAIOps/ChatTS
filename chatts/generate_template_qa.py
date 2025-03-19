@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-    This script is used to generate training QA data with a set of prompts, which can be further used as seed QAs for TSEvol.
+    This script is used to generate the stage-1 data with a set of prompts, which can be further used as seed QAs for TSEvol.
     We only show some simple templates here for demonstration. You can modify the code to generate your own QA dataset.
     Usage:
         python3 -m chatts.generate_template_qa

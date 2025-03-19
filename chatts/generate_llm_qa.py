@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-    This script is used to generate training QA data with LLMs for univariate time series, which can be further used as seed QAs for TSEvol.
+    This script is used to generate the stage-2 training data with LLMs for univariate time series, which can be further used as seed QAs for TSEvol.
     Usage:
         python3 -m chatts.generate_llm_qa
 """
@@ -76,7 +76,7 @@ def generate_prompt_data():
         if task == 'stl':
             fields.append({'trend': [0], 'seasonal': [0], 'noise': [0]})
             prompt += "From the overall trend, periodicity, and noise characteristics, the description of this time series is as follows:"
-            prompt = attribute_to_text(
+            prompt += attribute_to_text(
                 timeseries,
                 attribute_pool,
                 include_attributes=['length', 'trend', 'periodicity', 'frequency', 'noise'],
@@ -88,7 +88,7 @@ def generate_prompt_data():
             if len(attribute_pool['local']) == 0:
                 continue
             prompt += "From the local fluctuations in ths time series, the description is as follows:"
-            prompt = attribute_to_text(
+            prompt += attribute_to_text(
                 timeseries,
                 attribute_pool,
                 include_attributes=['local'],
@@ -98,7 +98,7 @@ def generate_prompt_data():
         elif task == 'statistic-all':
             fields.append({'statistic': [0]})
             prompt += "From the perspective of statistic, the information about this time series is:"
-            prompt = attribute_to_text(
+            prompt += attribute_to_text(
                 timeseries,
                 attribute_pool,
                 include_attributes=['length'],

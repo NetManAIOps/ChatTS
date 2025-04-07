@@ -30,7 +30,7 @@ from chatts.attribute_utils import metric_to_controlled_attributes
 
 # CONFIG
 TOTAL_CNT = 1000
-SEQ_LEN = None  # Set to None to enable random sequence length selection
+SEQ_LEN = 256  # Set to None to enable random sequence length selection
 ENCODING_METHOD = 'sp'
 OUTPUT_DATASET = f'result/llm_qa_{TOTAL_CNT}_{ENCODING_METHOD}.jsonl'
 OUTPUT_LABEL = f'labels/llm_qa_{TOTAL_CNT}_{ENCODING_METHOD}.json'

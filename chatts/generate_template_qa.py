@@ -31,7 +31,7 @@ from chatts.attribute_utils import metric_to_controlled_attributes
 
 # CONFIG
 ENCODING_METHOD = 'sp'
-SEQ_LEN = None  # Set to none for random seq_len
+SEQ_LEN = 256  # Set to none for random seq_len
 TOTAL_CNT = 1000
 OUTPUT_DATASET = f'result/template_qa_{TOTAL_CNT}_{ENCODING_METHOD}.jsonl'
 OUTPUT_LABEL = f'labels/template_qa_{TOTAL_CNT}_{ENCODING_METHOD}.json'

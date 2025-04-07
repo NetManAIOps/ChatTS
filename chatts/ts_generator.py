@@ -24,8 +24,8 @@ from chatts.trend_utils import generate_random_points, generate_trend_prompt, ge
 # Config
 ENABLE_MULTIPLE_TREND = True
 ENABLE_DROP_PROMPT = True
-ENABLE_MULTIPLE_SEASONAL = True
-ENABLE_MULTIPLE_NOISE = True
+ENABLE_MULTIPLE_SEASONAL = False
+ENABLE_MULTIPLE_NOISE = False
 
 # All Config for TS Attributes
 # Notes

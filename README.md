@@ -105,7 +105,9 @@ outputs = language_model.generate([{
     2. Run `python3 -m chatts.evol.evol_instruct`.
     3. The output will be saved to the file specified in `OUTPUT_FILE`.
   
-**Note:** These codes for data generation are provided only as references rather than complete implementations. The complete code and training datasets will be released soon after the acceptance of this paper.
+#### Notes
+- These codes for data generation are provided only as references rather than complete implementations. The complete code and training datasets will be released soon after the acceptance of this paper.
+- `SEQ_LEN` of generated time series can be configured by setting the `SEQ_LEN` parameter in `chatts/generate_llm_qa.py` and `chatts/generate_template_qa.py`. We set `SEQ_LEN=256` by default. In ChatTS, most of the time series are with length of 256 in the training and evaluation datasets. We also mix time series with other lengths during training (by setting `SEQ_LEN=None`) for ChatTS to adapt to time series with different lengths.
 
 ### Deepspeed Model Inference for Evaluation
 - We provide a simple script for inference of ChatTS (`chatts/inference_tsmllm_deepspeed.py`) with `deepspeed`. After installing `deepspeed`, please set the `WORKDIR` (the absolute path of the current directory) and the evaluation dataset in the script. Then, run the following command to do the model inference:

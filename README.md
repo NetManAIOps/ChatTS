@@ -3,6 +3,7 @@
 # ChatTS: Understanding, Chat, Reasoning about Time Series with TS-MLLM
 
 [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-FFD21E)](https://huggingface.co/bytedance-research/ChatTS-14B)
+[![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Datasets-FFD21E)](https://huggingface.co/datasets/ChatTSRepo/ChatTS-Training-Dataset)
 [![DOI](https://zenodo.org/badge/DOI/Datasets.svg)](https://doi.org/10.5281/zenodo.14349206)
 [![preprint](https://img.shields.io/static/v1?label=arXiv&message=2412.03104&color=B31B1B&logo=arXiv)](https://arxiv.org/abs/2412.03104)
 ![Visits Badge](https://badges.pufler.dev/visits/NetManAIOps/ChatTS)
@@ -23,12 +24,24 @@ Here is an example of a ChatTS application, which allows users to interact with 
 A fine-tuned `ChatTS` model (based on a modified version of QWen2.5-14B-Instruct) have been open-sourced at [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-FFD21E)](https://huggingface.co/bytedance-research/ChatTS-14B). You can download and try it! -->
 
 ## News
-- **2025/04/16**: ChatTS has been accepted by VLDB '25! We will soon release the complete training dataset and the full data generation code. For now, you can still use the code in this repo to generate data manually and do the model training.
+- **2025/04/16**: ChatTS has been accepted by VLDB '25! We will soon release the full data generation code. You can also use the code in this repo to generate data manually and do the model training.
 - **2025/01/01**: We have released a new version of `ChatTS` model, with enhanced CoT and question answering capability. Check [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-FFD21E)](https://huggingface.co/bytedance-research/ChatTS-14B) for more information.
 - **2024/12/30**: A experimental version of `vLLM` support for ChatTS is available! Check [demo_vllm.py](demo_vllm.py) for more information. (**Note**: This version is still under development and may not be stable.) We have also updated the ChatTS model implementation, which supports `kv_cache` and `AutoProcessor` now.
 
 ## Introduction
-This repository provides several toolkits for generating synthetic data with the approaches introduced in `ChatTS`, as well as the evaluation code and evaluation datasets for reproduction:
+This repository provides several toolkits for generating synthetic data with the approaches introduced in `ChatTS`, as well as the evaluation code and evaluation datasets for reproduction. 
+
+**Resource Links:**
+
+| Resource                | Link                                                                              | Description                         |
+|-------------------------|-----------------------------------------------------------------------------------|-------------------------------------|
+| ChatTS Paper (VLDB' 25)    | [arXiv:2412.03104](https://arxiv.org/abs/2412.03104)                              | Paper                      |
+| ChatTS Model            | [Hugging Face Model](https://huggingface.co/bytedance-research/ChatTS-14B)        | Model weights                       |
+| Training Dataset        | [Hugging Face Dataset](https://huggingface.co/datasets/ChatTSRepo/ChatTS-Training-Dataset) | Synthetic training set              |
+| Evaluation Datasets     | [Zenodo](https://doi.org/10.5281/zenodo.14349206)                                 | Real & synthetic eval data          |
+| Fine-tuning Scripts     | [ChatTS-Training](https://github.com/xiezhe-24/ChatTS-Training)                   | Fine-tuning code                    |
+
+We have provided:
 - Toolkits for generating synthetic time series data and the corresponding attribues: `chatts/ts_generator.py`.
 - Example code for generating a training dataset with pre-defined templates: `chatts/generate_template_qa.py`, which can be further used as seed QAs for TSEvol.
 - Example code for generating a training dataset with LLMs: `chatts/generate_llm_qa`, which can be further used as seed QAs for TSEvol.

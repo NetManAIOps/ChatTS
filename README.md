@@ -24,7 +24,7 @@ Here is an example of a ChatTS application, which allows users to interact with 
 A fine-tuned `ChatTS` model (based on a modified version of QWen2.5-14B-Instruct) have been open-sourced at [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-FFD21E)](https://huggingface.co/bytedance-research/ChatTS-14B). You can download and try it! -->
 
 ## News
-- **2025/04/16**: ChatTS has been accepted by VLDB '25! We will soon release the full data generation code. You can also use the code in this repo to generate data manually and do the model training.
+- **2025/04/16**: ChatTS has been accepted by VLDB '25! We have released the training datasets for ChatTS. The full data generation code will be released soon. You can also use the code in this repo to generate data manually and do the model training.
 - **2025/01/01**: We have released a new version of `ChatTS` model, with enhanced CoT and question answering capability. Check [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-FFD21E)](https://huggingface.co/bytedance-research/ChatTS-14B) for more information.
 - **2024/12/30**: A experimental version of `vLLM` support for ChatTS is available! Check [demo_vllm.py](demo_vllm.py) for more information. (**Note**: This version is still under development and may not be stable.) We have also updated the ChatTS model implementation, which supports `kv_cache` and `AutoProcessor` now.
 
@@ -33,13 +33,17 @@ This repository provides several toolkits for generating synthetic data with the
 
 **Resource Links:**
 
+<div align="center">
+
 | Resource                | Link                                                                              | Description                         |
 |-------------------------|-----------------------------------------------------------------------------------|-------------------------------------|
 | ChatTS Paper (VLDB' 25)    | [arXiv:2412.03104](https://arxiv.org/abs/2412.03104)                              | Paper                      |
 | ChatTS Model            | [Hugging Face Model](https://huggingface.co/bytedance-research/ChatTS-14B)        | Model weights                       |
-| Training Dataset        | [Hugging Face Dataset](https://huggingface.co/datasets/ChatTSRepo/ChatTS-Training-Dataset) | Synthetic training set              |
+| Training Datasets        | [Hugging Face Dataset](https://huggingface.co/datasets/ChatTSRepo/ChatTS-Training-Dataset) | Synthetic training set              |
 | Evaluation Datasets     | [Zenodo](https://doi.org/10.5281/zenodo.14349206)                                 | Real & synthetic eval data          |
-| Fine-tuning Scripts     | [ChatTS-Training](https://github.com/xiezhe-24/ChatTS-Training)                   | Fine-tuning code                    |
+| Fine-tuning Scripts     | [ChatTS-Training](https://github.com/xiezhe-24/ChatTS-Training)                   | Training Scripts for ChatTS                    |
+
+</div>
 
 We have provided:
 - Toolkits for generating synthetic time series data and the corresponding attribues: `chatts/ts_generator.py`.
@@ -49,6 +53,7 @@ We have provided:
 - Code implementation for evaluation: `evaluation/`.
 - Simple demos for inference: `demo_hf.ipynb` and `demo_vllm.py`.
 - A trained `ChatTS` model (fine-tuned based on a modified version of QWen2.5-14B-Instruct) at [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-FFD21E)](https://huggingface.co/bytedance-research/ChatTS-14B).
+- Training datasets: [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Datasets-FFD21E)](https://huggingface.co/datasets/ChatTSRepo/ChatTS-Training-Dataset)
 - Evaluations datasets: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14349206.svg)](https://doi.org/10.5281/zenodo.14349206).
 - **Training scripts**: [ChatTS-Training](https://github.com/xiezhe-24/ChatTS-Training).
 
@@ -120,7 +125,7 @@ outputs = language_model.generate([{
     3. The output will be saved to the file specified in `OUTPUT_FILE`.
   
 #### Notes
-- These codes for data generation are provided only as references rather than complete implementations. The complete code and training datasets will be released soon after the acceptance of this paper.
+- Since we are currently organizing the code, the complete data generation code has not yet been fully released. However, we have open-sourced the training dataset for ChatTS. The complete data generation codes will be released soon.
 - `SEQ_LEN` of generated time series can be configured by setting the `SEQ_LEN` parameter in `chatts/generate_llm_qa.py` and `chatts/generate_template_qa.py`. We set `SEQ_LEN=256` by default. In ChatTS, most of the time series are with length of 256 in the training and evaluation datasets. We also mix time series with other lengths during training (by setting `SEQ_LEN=None`) for ChatTS to adapt to time series with different lengths.
 
 ### Deepspeed Model Inference for Evaluation
@@ -141,7 +146,7 @@ You should find the inference results under `exp/` folder, which will be further
 - We provide a simple script for fine-tuning your own TS-MLLM models: https://github.com/xiezhe-24/ChatTS-Training (modified based on [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory)). Refer to this repository for more details.
 
 ## Evaluation Datasets
-- We've provided the two evaluation datasets we gathered, as stated in the paper. You can find them in the `evaluation/dataset` folder. Each sample in these datasets has several parts: `timeseries`, which is the time series data itself; `question`, the query related to the time series; `answer`, the text-form standard answers provided for your reference only; `attributes`, the structured labels used to evaluate results; and `ability_types`, which indicates the types of tasks the question involves.
+- Evaluation datasets (Dataset A and B) are available at https://doi.org/10.5281/zenodo.14349206. Each sample in these datasets has several parts: `timeseries`, which is the time series data itself; `question`, the query related to the time series; `answer`, the text-form standard answers provided for your reference only; `attributes`, the structured labels used to evaluate results; and `ability_types`, which indicates the types of tasks the question involves.
 **Please pay special attention to this**: To cut down on evaluation costs, we've combined different questions that pertain to the same time series into one `question`. We use numbering to tell these different questions apart. So, when you look at the evaluation dataset, the actual count of questions might be more than the number of `timeseries` entries. Another thing to note is that some tasks in inductive reasoning and alignment are grouped together in one question. This is because inductive reasoning tasks often require explaining the physical meanings of time series attributes. 
 - The `MCQ2` dataset is sourced from a third-party and is open-source. However, due to licensing restrictions, we are unable to provide it within this repository. You can directly download it via https://github.com/behavioral-data/TSandLanguage.
 

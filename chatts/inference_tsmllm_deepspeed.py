@@ -25,9 +25,8 @@ from encoding_utils import timeseries_encoding
 
 # CONFIG
 EXP = 'chatts_dataset_a'
-WORKDIR = '[YOUR_WORK_DIR]'
-MODEL_PATH = f'{WORKDIR}/ckpt'
-DATASET = f'{WORKDIR}/evaluation/dataset/dataset_a.json'
+MODEL_PATH = f'../ckpt'
+DATASET = f'../evaluation/dataset/dataset_a.json'
 
 # Don't change the below config
 BATCH_SIZE = 1

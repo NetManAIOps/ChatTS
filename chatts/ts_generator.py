@@ -42,10 +42,10 @@ all_attribute_set = {
             "triangle periodic fluctuation": 0.03
         },
         "trend": {
-            "decrease": 0.2,
-            "increase": 0.2,
+            "decrease": 0.3,
+            "increase": 0.3,
             "keep steady": 0.3,
-            "multiple": 0.3
+            "multiple": 0.1
         },
         "frequency": {
             "high frequency": 0.5,

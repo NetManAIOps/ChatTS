@@ -33,8 +33,9 @@ from chatts.attribute_utils import metric_to_controlled_attributes
 ENCODING_METHOD = 'sp'
 SEQ_LEN = 256  # Set to none for random seq_len
 TOTAL_CNT = 1000
-OUTPUT_DATASET = f'result/template_qa_{TOTAL_CNT}_{ENCODING_METHOD}.jsonl'
-OUTPUT_LABEL = f'labels/template_qa_{TOTAL_CNT}_{ENCODING_METHOD}.json'
+OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
+OUTPUT_DATASET = f'{OUTPUT_BASE_DIR}/template_qa_{TOTAL_CNT}_{ENCODING_METHOD}.jsonl'
+OUTPUT_LABEL = f'{OUTPUT_BASE_DIR}/label/template_qa_{TOTAL_CNT}_{ENCODING_METHOD}.json'
 
 # All Config for TS Attributes (type & probability)
 metric_config = json.load(open('config/metric_set.json', 'rt'))
@@ -279,8 +280,8 @@ def generate_seed_qa_dataset():
     labels = []
  
     # Create output directory
-    os.makedirs("result", exist_ok=True)
-    os.makedirs("labels", exist_ok=True)
+    os.makedirs(OUTPUT_BASE_DIR, exist_ok=True)
+    os.makedirs(os.path.dirname(OUTPUT_LABEL), exist_ok=True)
 
     with tqdm(total=TOTAL_CNT, desc='Generating seed qa') as t, open(OUTPUT_DATASET, 'wt') as f:
         while True:

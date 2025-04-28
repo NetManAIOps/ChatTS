@@ -26,14 +26,16 @@ from chatts.ts_generator import generate_time_series, generate_controlled_attrib
 from chatts.llm_utils import llm_batch_generate, parse_llm_json
 from chatts.encoding_utils import timeseries_encoding, timeseries_to_list
 from chatts.attribute_utils import metric_to_controlled_attributes
+import os
 
 
 # CONFIG
 TOTAL_CNT = 1000
 SEQ_LEN = 256  # Set to None to enable random sequence length selection
 ENCODING_METHOD = 'sp'
-OUTPUT_DATASET = f'result/llm_qa_{TOTAL_CNT}_{ENCODING_METHOD}.jsonl'
-OUTPUT_LABEL = f'labels/llm_qa_{TOTAL_CNT}_{ENCODING_METHOD}.json'
+OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
+OUTPUT_DATASET = f'{OUTPUT_BASE_DIR}/llm_qa_{TOTAL_CNT}_{ENCODING_METHOD}.jsonl'
+OUTPUT_LABEL = f'{OUTPUT_BASE_DIR}/label/llm_qa_{TOTAL_CNT}_{ENCODING_METHOD}.json'
 DRYRUN = False
 
 
@@ -197,6 +199,10 @@ def generate_dataset():
 
 
 if __name__ == '__main__':
+    # Create output directory if not exists
+    os.makedirs(os.path.dirname(OUTPUT_DATASET), exist_ok=True)
+    os.makedirs(os.path.dirname(OUTPUT_LABEL), exist_ok=True)
+
     result, labels = generate_dataset()
     with open(OUTPUT_DATASET, 'wt') as f:
         for item in result:

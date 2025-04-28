@@ -1,0 +1,4 @@
+{
+    "data_output_dir": "data",
+    "local_llm_path": "MODEL_PATH"
+}

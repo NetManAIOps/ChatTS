@@ -72,6 +72,10 @@ def correlation_attribute_prompt(timeseries: np.ndarray, attribute_pool: List[di
     result = f'The correlation information of some time series are as follows: '
     corr_attribute_pool = []
     for i in idx:
+        if i >= len(corr_pool):
+            break
+        if corr_pool[i] is None:
+            continue
         corr_attribute_pool.append(" - " + corr_pool[i][1])
     result += '\n'.join(corr_attribute_pool)
     return result

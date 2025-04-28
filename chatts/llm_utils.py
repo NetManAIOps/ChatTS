@@ -26,7 +26,7 @@ from typing import *
 
 
 # Config
-MODEL_PATH = "[LOCAL_LLM_PATH]"
+MODEL_PATH = json.load(open("config/datagen_config.json"))["local_llm_path"]
 ctx_length = 5000
 num_gpus = 8
 gpu_per_model = 1

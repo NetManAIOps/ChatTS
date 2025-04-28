@@ -36,7 +36,7 @@ import copy
 
 
 # Config
-MODEL_PATH = "[LOCAL_LLM_PATH]"
+MODEL_PATH = json.load(open("config/datagen_config.json"))["local_llm_path"]
 ctx_length = 4096
 num_gpus = 8
 gpu_per_model = 1
@@ -51,7 +51,8 @@ INPUT_FILES = [
     (f'result/template_qa_1000_{ENCODING_METHOD}.jsonl', f'labels/template_qa_1000_{ENCODING_METHOD}.json'),
     (f'result/llm_qa_1000_{ENCODING_METHOD}.jsonl', f'labels/llm_qa_1000_{ENCODING_METHOD}.json')
 ]
-OUTPUT_FILE = f'result/evol_{TOTAL_CNT}_{ENCODING_METHOD}.jsonl'
+OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
+OUTPUT_FILE = f'{OUTPUT_BASE_DIR}/evol_{TOTAL_CNT}_{ENCODING_METHOD}.jsonl'
 
 
 def worker_vllm(input_queue, validation_queue, input_response, validation_response, gpu_id, batch_size, model_path=MODEL_PATH):

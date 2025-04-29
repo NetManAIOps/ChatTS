@@ -119,7 +119,7 @@ outputs = language_model.generate([{
 ```
 
 ### Training Data Generation
-1. **Alignment Data Generation.** Please first set `local_llm_path` to your local LLM for the following steps. Run `bash scripts/generate_align_datasets.sh` to generate the alignment datasets.
+1. **Alignment Data Generation.** Please first set `local_llm_path` in `config/datagen_config.json` to your local LLM for the following steps. Run `bash scripts/generate_align_datasets.sh` to generate the alignment datasets.
 2. **[To generate your own data]** We provide two examples: generate QA through Template and LLM. You can modify them according to your own task.
   - **QA Generation with Templates**. Use `python3 -m chatts.generate_template_qa` to generate a training dataset with pre-defined templates.
   - **QA Generation with LLMs**. You need a downloaded LLM that can be loaded with `vLLM` to perform this step. Set `[LOCAL_LLM_PATH]` in `chatts/generate_llm_qa.py` to a local LLM model (e.g., QWen2.5-32B-Instruct, **NOT ChatTS Model**) and set num_gpus, gpu_per_model accordingly. Use `python3 -m chatts.generate_llm_qa` to generate a training dataset with LLMs.

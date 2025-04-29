@@ -15,7 +15,7 @@ NUM_DATA = 20000
 SEQ_LEN = None
 ENCODING_METHOD = 'sp'
 OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
-OUTPUT_PATH = f'{OUTPUT_BASE_DIR}/mts_local_template_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}_0411.jsonl'
+OUTPUT_PATH = f'{OUTPUT_BASE_DIR}/mts_local_template_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.jsonl'
 
 
 # All Config for TS Features

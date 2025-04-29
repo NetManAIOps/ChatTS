@@ -9,6 +9,7 @@ flash-attn
 PyWavelets
 matplotlib
 tqdm
+sktime
 vllm==0.6.6.post1
 ragas==0.1.9
 langchain==0.2.15

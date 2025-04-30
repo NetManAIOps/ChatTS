@@ -26,7 +26,7 @@ import os
 
 # CONFIG
 NUM_DATA = 20000
-SEQ_LEN = None
+SEQ_LEN = 256
 ENCODING_METHOD = 'sp'
 OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
 OUTPUT_PATH = f'{OUTPUT_BASE_DIR}/mts_local_template_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.jsonl'
@@ -34,7 +34,7 @@ OUTPUT_PATH = f'{OUTPUT_BASE_DIR}/mts_local_template_{SEQ_LEN}_{NUM_DATA}_{ENCOD
 
 # All Config for TS Features
 all_config = {
-    "overall_feature": {
+    "overall_attribute": {
         "seasonal": {
             "no periodic fluctuation": 0.7,
             "periodic fluctuation": 0.3
@@ -92,7 +92,7 @@ def generate_positive_timeseries(cnt: int, seq_len: int = 256) -> Tuple[List[np.
     attributes = []
     for _ in range(cnt):
         changes = {(int(change_position + random.uniform(-10, 10)), None)}
-        attribute_pool = generate_random_attributes(all_config['overall_feature'], all_config['change'], changes.copy())
+        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], changes.copy())
         ts, attribute_pool = generate_time_series(attribute_pool, seq_len)
         timeseries.append(ts)
         attributes.append(attribute_pool)
@@ -128,7 +128,7 @@ def generate_negative_timeseries(cnt: int, positive_positions: List[int], seq_le
         else:
             changes = set()
         
-        attribute_pool = generate_random_attributes(all_config['overall_feature'], all_config['change'], changes)
+        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], changes)
         ts, attribute_pool = generate_time_series(attribute_pool, seq_len)
         timeseries.append(ts)
         attributes.append(attribute_pool)

@@ -29,7 +29,7 @@ import os
 
 # CONFIG
 NUM_DATA = 15000
-SEQ_LEN = None  # Set to None for random length
+SEQ_LEN = 256  # Set to None for random length
 ENCODING_METHOD = 'sp'
 OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
 OUTPUT_PATH = f'{OUTPUT_BASE_DIR}/mts_shape_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.jsonl'
@@ -41,7 +41,7 @@ DRYRUN = False
 
 # All Config for TS Features
 all_config = {
-    "overall_attributes": {
+    "overall_attribute": {
         "seasonal": {
             "no periodic fluctuation": 0.9,
             "periodic fluctuation": 0.1
@@ -99,7 +99,7 @@ def generate_positive_timeseries(cnt: int, seq_len: int = 256) -> Tuple[List[np.
             changes = {(None, None)}
         else:
             changes = {}
-        attribute_pool = generate_random_attributes(all_config['overall_attributes'], all_config['change'], changes.copy())
+        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], changes.copy())
         ts, attribute_pool = generate_time_series(attribute_pool, seq_len)
 
         # Add some changes to points
@@ -129,7 +129,7 @@ def generate_negative_timeseries(cnt: int, positive_points: List[Tuple[int, floa
             changes = {(None, None)}
         else:
             changes = {}
-        attribute_pool = generate_random_attributes(all_config['overall_attributes'], all_config['change'], changes.copy())
+        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], changes.copy())
         ts, attribute_pool = generate_time_series(attribute_pool, seq_len)
 
         if random.random() > 0.7 or len(positive_points) <= 3:

@@ -27,7 +27,7 @@ import os
 
 # CONFIG
 NUM_DATA = 15000
-SEQ_LEN = None  # Set to None for random length
+SEQ_LEN = 256  # Set to None for random length
 ENCODING_METHOD = 'sp'
 OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
 OUTPUT_PATH = f'{OUTPUT_BASE_DIR}/uts_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.jsonl'
@@ -37,7 +37,7 @@ DRYRUN = False
 
 # All Config for TS Features
 all_config = {
-    "overall_attributes": {
+    "overall_attribute": {
         "seasonal": {"no periodic fluctuation": 0.7, "periodic fluctuation": 0.3},
         "trend": {"decrease": 0.2, "increase": 0.2, "keep steady": 0.6},
         "frequency": {"high frequency": 0.5, "low frequency": 0.5},
@@ -86,7 +86,7 @@ def generate_prompt_data():
 
     # Generate attribute_pool and time series
     if DISABLE_METRIC_CONFIG:
-        attribute_pool = generate_random_attributes(all_config['overall_attributes'], all_config['change'])
+        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'])
     else:
         attribute_pool = generate_controlled_attributes(metric_to_controlled_attributes(metric))
     timeseries, attribute_pool = generate_time_series(attribute_pool, current_seq_len)
@@ -116,7 +116,7 @@ def generate_prompt_data():
         "The periodicity of this metric is as follow: "
         + attribute_to_text(timeseries, attribute_pool, generate_values=False,
                               include_attributes=['periodicity'])
-        + " Please analyze the physical meaning of this kind of periodicity in one sentence."
+        + " Please analyze the physical meaning of this kind of periodicity in one sentence (xxx indicates that xxx):"
     ])
     all_prompt_idx += 1
 
@@ -141,8 +141,7 @@ def generate_prompt_data():
     # Step 3: local fluctuations
     if attribute_pool.get('local'):
         questions.append(
-            "Now, please analyze the characteristics of this metric from the perspectives of local fluctuations,"
-            " and conclude the physical meaning of each in one sentence."
+            "Now, please analyze the characteristics of this metric from the perspectives of local fluctuations, and conclude the physical meaning of each in one sentence. Answer format: shake, position around point 125, amplitude 135.03. A sudden surge in public interest, likely due to significant news, a major event, or a trending topic related to the platform that rapidly captured user attention; small sudden decrease, position around point 102, amplitude 31.05. A slight increase in interest, possibly driven by minor news, promotions, or social media discussions that briefly captured attention without indicating a significant trend."
         )
         fields.append({'local': [0]})
         # combine multiple local explanations
@@ -161,7 +160,7 @@ def generate_prompt_data():
             local_prompts.append(
                 f"There is a metric called {metric} collected from {category} with length of {current_seq_len}. "
                 f"A local fluctuation of this metric is found. The type is {local_char['type']}. "
-                "Please analyze the physical meaning of this fluctuation in one sentence."
+                "Please analyze the physical meaning of this fluctuation in one sentence (keep it simple, just output the physical meaning itself, do not output any description words like `the fluctuation of this metric`. Output Example: indicates that there are many computational extensive programs using CPU):"
             )
         prompts.append(local_prompts)
 

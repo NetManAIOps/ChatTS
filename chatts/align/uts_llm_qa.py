@@ -32,6 +32,7 @@ ENCODING_METHOD = 'sp'
 OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
 OUTPUT_PATH = f'{OUTPUT_BASE_DIR}/uts_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.jsonl'
 LABEL_PATH = f'{OUTPUT_BASE_DIR}/labels/uts_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.json'
+EVOL_LABEL_PATH = f'{OUTPUT_BASE_DIR}/evol_labels/uts_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.json'
 DISABLE_METRIC_CONFIG = False
 DRYRUN = False
 
@@ -89,6 +90,10 @@ def generate_prompt_data():
         attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'])
     else:
         attribute_pool = generate_controlled_attributes(metric_to_controlled_attributes(metric))
+
+    attribute_pool['metric_name'] = metric
+    attribute_pool['category'] = category
+
     timeseries, attribute_pool = generate_time_series(attribute_pool, current_seq_len)
 
     # Encode series
@@ -211,23 +216,31 @@ def generate_dataset():
             idx += 1
 
     # Build labels matching original format
-    labels_out = []
+    labels_out, evol_labels_out = [], []
+
     for item in result:
-        labels_out.append({
+        evol_labels_out.append({
             'fields': item['fields'],
             'metrics': item['metrics'],
             'corr_pool': item['corr_pool'],
             'attribute_pool': item['attribute_pool'],
             'instruction': item['instruction'],
             'question': item['question'],
-            'ts_idx': item['ts_idx']
+            'ts_idx': item['ts_idx'],
         })
-    return result, labels_out
+        
+        labels_out.append({
+            'label': item['attribute_pool'][0],
+            'ts_idx': item['ts_idx'],
+            'timeseries': timeseries_to_list(item['original_timeseries'][0]),
+        })
+    return result, evol_labels_out, labels_out
 
 
 if __name__ == '__main__':
-    result, labels = generate_dataset()
+    result, evol_labels, labels = generate_dataset()
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
+    os.makedirs(os.path.dirname(EVOL_LABEL_PATH), exist_ok=True)
     os.makedirs(os.path.dirname(LABEL_PATH), exist_ok=True)
     with open(OUTPUT_PATH, 'wt') as f:
         for item in result:
@@ -239,5 +252,7 @@ if __name__ == '__main__':
                 'fields': item['fields']
             }
             f.write(json.dumps(out, ensure_ascii=False) + '\n')
+    with open(EVOL_LABEL_PATH, 'wt') as f:
+        json.dump(evol_labels, f, ensure_ascii=False, indent=4)
     with open(LABEL_PATH, 'wt') as f:
         json.dump(labels, f, ensure_ascii=False, indent=4)

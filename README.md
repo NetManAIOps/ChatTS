@@ -127,7 +127,8 @@ outputs = language_model.generate([{
     1. Set `[LOCAL_LLM_PATH]` in `evol_instruct.py` to the path of a local LLM model (e.g., QWen2.5-32B-Instruct. **NOT ChatTS Model**) for QA generation and set num_gpus, gpu_per_model accordingly in `chatts/evol/evol_instruct.py`.
     2. Run `python3 -m chatts.evol.evol_instruct`.
     3. The output will be saved to the file specified in `OUTPUT_FILE`.
-  
+4. **IFT Dataset**. Please generate the `alignment datasets` first! The generation of the `IFT (Instruction Following)` datasets takes the labels of the alignment datasets as input and output the ift dataset through a set of predefined templates. Run `python3 -m chatts.generate_ift_dataset` after all the alignment datasets have been successfully generated (in step 1).
+
 #### Notes
 - `SEQ_LEN` of generated time series can be configured by setting the `SEQ_LEN` parameter in `chatts/generate_llm_qa.py` and `chatts/generate_template_qa.py`, and all the files under `chatts/align`. In ChatTS, most of the time series are with length of 256 in the training and evaluation datasets. We also mix time series with other lengths during training (by setting `SEQ_LEN=None`) for ChatTS to adapt to time series with different lengths.
 

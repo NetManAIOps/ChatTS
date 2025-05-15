@@ -25,8 +25,9 @@ import os
 
 
 # CONFIG
-NUM_DATA = 20000
+NUM_DATA = 15000
 SEQ_LEN = 256
+OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
 ENCODING_METHOD = 'sp'
 OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
 OUTPUT_PATH = f'{OUTPUT_BASE_DIR}/mts_shape_template_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.jsonl'

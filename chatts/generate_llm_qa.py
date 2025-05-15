@@ -35,7 +35,7 @@ SEQ_LEN = 256  # Set to None to enable random sequence length selection
 ENCODING_METHOD = 'sp'
 OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
 OUTPUT_DATASET = f'{OUTPUT_BASE_DIR}/llm_qa_{TOTAL_CNT}_{ENCODING_METHOD}.jsonl'
-OUTPUT_LABEL = f'{OUTPUT_BASE_DIR}/label/llm_qa_{TOTAL_CNT}_{ENCODING_METHOD}.json'
+OUTPUT_LABEL = f'{OUTPUT_BASE_DIR}/evol_labels/llm_qa_{TOTAL_CNT}_{ENCODING_METHOD}.json'
 DRYRUN = False
 
 

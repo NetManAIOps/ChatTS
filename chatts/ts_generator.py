@@ -36,8 +36,8 @@ ENABLE_MULTIPLE_NOISE = False
 all_attribute_set = {
     "overall_attribute": {
         "seasonal": {
-            "no periodic fluctuation": 0.6,
-            "sin periodic fluctuation": 0.35,
+            "no periodic fluctuation": 0.7,
+            "sin periodic fluctuation": 0.25,
             "square periodic fluctuation": 0.02,
             "triangle periodic fluctuation": 0.03
         },
@@ -52,8 +52,8 @@ all_attribute_set = {
             "low frequency": 0.5
         },
         "noise": {
-            "noisy": 0.3,
-            "almost no noise": 0.7
+            "noisy": 0.2,
+            "almost no noise": 0.8
         }
     },
     "change": {
@@ -291,22 +291,27 @@ def generate_noise(attribute_pool, y, overall_amplitude, seq_len):
         if ENABLE_MULTIPLE_NOISE:
             num_noise_segments = random.randint(1, 3)
         
-        # Choose segments to apply noise
-        attribute_pool["noise"]["segments"] = []
-        noise_segments = generate_split_points(seq_len, num_noise_segments)
-        for i in range(num_noise_segments):
-            noise_start = noise_segments[i]
-            noise_end = noise_segments[i + 1]
+            # Choose segments to apply noise
+            attribute_pool["noise"]["segments"] = []
+            noise_segments = generate_split_points(seq_len, num_noise_segments)
+            for i in range(num_noise_segments):
+                noise_start = noise_segments[i]
+                noise_end = noise_segments[i + 1]
+                noise_std_amp = np.random.uniform(0.1, 5.0)
+                noise[noise_start:noise_end] *= noise_std_amp
+                attribute_pool["noise"]["segments"].append({
+                    "position_start": noise_start,
+                    "position_end": noise_end,
+                    "amplitude": round(noise_std_amp * std, 2),
+                    "description": f"the noise std is {noise_std_amp * std:.2f} between point {noise_start} and point {noise_end}"
+                })
+                attribute_pool["noise"]["detail"] += f"the noise std is {noise_std_amp * std:.2f} between point {noise_start} and point {noise_end}, "
+            attribute_pool["noise"]["detail"] = attribute_pool["noise"]["detail"][:-2] + ". "
+        else:
             noise_std_amp = np.random.uniform(0.1, 5.0)
-            noise[noise_start:noise_end] *= noise_std_amp
-            attribute_pool["noise"]["segments"].append({
-                "position_start": noise_start,
-                "position_end": noise_end,
-                "amplitude": round(noise_std_amp * std, 2),
-                "description": f"the noise std is {noise_std_amp * std:.2f} between point {noise_start} and point {noise_end}"
-            })
-            attribute_pool["noise"]["detail"] += f"the noise std is {noise_std_amp * std:.2f} between point {noise_start} and point {noise_end}, "
-        attribute_pool["noise"]["detail"] = attribute_pool["noise"]["detail"][:-2] + ". "
+            noise *= noise_std_amp
+            attribute_pool["noise"]["std"] = round(noise_std_amp * std, 2)
+            attribute_pool["noise"]["detail"] = f"The overall noise standard deviation is around {noise_std_amp * std:.2f}, indicating a large noisy curve."
     elif noise_level == "almost no noise":
         if max_change > overall_amplitude / 2:
             std = np.random.uniform(0.0, 0.001) * overall_amplitude

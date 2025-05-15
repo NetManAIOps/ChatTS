@@ -35,7 +35,7 @@ SEQ_LEN = 256  # Set to none for random seq_len
 TOTAL_CNT = 1000
 OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
 OUTPUT_DATASET = f'{OUTPUT_BASE_DIR}/template_qa_{TOTAL_CNT}_{ENCODING_METHOD}.jsonl'
-OUTPUT_LABEL = f'{OUTPUT_BASE_DIR}/label/template_qa_{TOTAL_CNT}_{ENCODING_METHOD}.json'
+OUTPUT_LABEL = f'{OUTPUT_BASE_DIR}/evol_labels/template_qa_{TOTAL_CNT}_{ENCODING_METHOD}.json'
 
 # All Config for TS Attributes (type & probability)
 metric_config = json.load(open('config/metric_set.json', 'rt'))

@@ -48,8 +48,8 @@ ENCODING_METHOD = 'sp'
 TOTAL_CNT = 100
 
 INPUT_FILES = [
-    (f'data/template_qa_1000_{ENCODING_METHOD}.jsonl', f'data/labels/template_qa_1000_{ENCODING_METHOD}.json'),
-    (f'data/llm_qa_1000_{ENCODING_METHOD}.jsonl', f'data/labels/llm_qa_1000_{ENCODING_METHOD}.json')
+    (f'data/template_qa_1000_{ENCODING_METHOD}.jsonl', f'data/eval_labels/template_qa_1000_{ENCODING_METHOD}.json'),
+    (f'data/llm_qa_1000_{ENCODING_METHOD}.jsonl', f'data/evol_labels/llm_qa_1000_{ENCODING_METHOD}.json')
 ]
 OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
 OUTPUT_FILE = f'{OUTPUT_BASE_DIR}/evol_{TOTAL_CNT}_{ENCODING_METHOD}.jsonl'

@@ -26,7 +26,7 @@ import os
 
 
 # CONFIG
-NUM_DATA = 15000
+NUM_DATA = 1500
 SEQ_LEN = 256  # Set to None for random length
 ENCODING_METHOD = 'sp'
 OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]

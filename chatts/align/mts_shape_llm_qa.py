@@ -28,13 +28,13 @@ import os
 
 
 # CONFIG
-NUM_DATA = 15000
+NUM_DATA = 1500
 SEQ_LEN = 256  # Set to None for random length
 ENCODING_METHOD = 'sp'
 OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
 OUTPUT_PATH = f'{OUTPUT_BASE_DIR}/mts_shape_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.jsonl'
-EVOL_LABEL_PATH = f'{OUTPUT_BASE_DIR}/labels/mts_shape_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.json'
-CLUSTER_LABEL_PATH = f'{OUTPUT_BASE_DIR}/cluster_labels/mts_shape_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.json'
+EVOL_LABEL_PATH = f'{OUTPUT_BASE_DIR}/evol_labels/mts_shape_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.json'
+CLUSTER_LABEL_PATH = f'{OUTPUT_BASE_DIR}/labels/mts_shape_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.json'
 DISABLE_METRIC_CONFIG = False
 DRYRUN = False
 

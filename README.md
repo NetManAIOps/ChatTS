@@ -30,7 +30,7 @@ Here is an example of a ChatTS application, which allows users to interact with 
 
 ### More Examples
 
-Check out the [Case Studies](#) section for real-world applications and sample conversations.
+Check out the [Case Studies](#case-studies) section for real-world applications and sample conversations.
 
 
 <!-- We also provide the evaluation datasets collected by us. You can download the evaluation datasets from [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14349206.svg)](https://doi.org/10.5281/zenodo.14349206). The training scripts can be found in [ChatTS-Training](https://github.com/xiezhe-24/ChatTS-Training).

@@ -14,10 +14,24 @@
 `ChatTS` is a Time Series Multimodal LLM focuses on **Understanding and Reasoning** about time series, much like what vision/video/audio-MLLMs do.
 This repo provides code, datasets and model for `ChatTS` (VLDB' 25): [ChatTS: Aligning Time Series with LLMs via Synthetic Data for Enhanced Understanding and Reasoning](https://arxiv.org/pdf/2412.03104).
 
+## Key Features
+ChatTS is a Multimodal LLM built natively for time series as a core modality：
+- ✅ **Native support for multivariate time series**
+- ✅ **Flexible input**: Supports multivariate time series with **different lengths** and **flexible dimensionality**
+- ✅ **Conversational understanding + reasoning**:  
+  Enables interactive dialogue over time series to explore insights, detect anomalies, or reason causally.
+- ✅ **Preserves raw numerical values**:  
+  Can answer **statistical questions**, such as _"What is the spike magnitude at timestamp t?"_
+- ✅ **Easy integration with existing LLM pipelines**, including support for **vLLM**.
+
+### Example Application
 Here is an example of a ChatTS application, which allows users to interact with a LLM to understand and reason about time series data:
 ![Chat](figures/chat_example.png)
 
-`ChatTS` features native support for multi-variate time series data with any length and range of values. With `ChatTS`, you can easily understand and reason about both the **shape** features and **value** features in the time series. `ChatTS` can also be integrated into existing LLM pipelines for more time series-related applications, leveraging existing inference frameworks such as `vLLMs`. Check out the [Case Studies](#case-studies) section for more examples.
+### More Examples
+
+Check out the [Case Studies](#) section for real-world applications and sample conversations.
+
 
 <!-- We also provide the evaluation datasets collected by us. You can download the evaluation datasets from [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14349206.svg)](https://doi.org/10.5281/zenodo.14349206). The training scripts can be found in [ChatTS-Training](https://github.com/xiezhe-24/ChatTS-Training).
 A fine-tuned `ChatTS` model (based on a modified version of QWen2.5-14B-Instruct) have been open-sourced at [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-FFD21E)](https://huggingface.co/bytedance-research/ChatTS-14B). You can download and try it! -->

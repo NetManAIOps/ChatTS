@@ -21,7 +21,7 @@ ChatTS is a Multimodal LLM built natively for time series as a core modality：
 - ✅ **Conversational understanding + reasoning**:  
   Enables interactive dialogue over time series to explore insights about time series
 - ✅ **Preserves raw numerical values**:  
-  Can answer **statistical questions**, such as _"What is the spike magnitude at timestamp t?"_
+  Can answer **statistical questions**, such as _"How large is the spike at timestamp t?"_
 - ✅ **Easy integration with existing LLM pipelines**, including support for **vLLM**.
 
 ### Example Application

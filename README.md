@@ -75,7 +75,7 @@ We have provided:
 
 ## How To Use
 ### Installation
-- Basic requirements for model inference: `python>=3.11`, `deepspeed`, `vllm==0.6.6.post1`, `torch==2.5.1`, `flash-attn` (refer to `requirements.txt`).
+- Basic requirements for model inference: `python>=3.11`, `deepspeed`, `vllm==0.8.5`, `torch==2.6.0`, `flash-attn` (refer to `requirements.txt`).
 - Download the evaluation datasets from [Zenodo](https://doi.org/10.5281/zenodo.14349206) and put them under `evaluation/dataset` (`evaluation/dataset/dataset_a.json` and `evaluation/dataset/dataset_b.json`).
 - Download the trained model weights from [HuggingFace](https://huggingface.co/bytedance-research/ChatTS-14B), extract it and put all the extracted files under `ckpt/` (`ckpt/config.json`, etc).
 - **Note:** `ChatTS` is trained based on a 14B-sized base model, so you need to ensure that you have a GPU with sufficient memory for inference. Additionally, due to the model's requirements, `Flash-Attention` (https://github.com/Dao-AILab/flash-attention) is essential, so you need to ensure that your GPU meets the installation requirements for Flash-Attention. Recommended GPUs: A100/A800.
@@ -113,7 +113,7 @@ print(tokenizer.decode(outputs[0][len(inputs['input_ids'][0]):], skip_special_to
 ### vLLM Inference
 Since [vLLM](https://github.com/vllm-project/vllm) lacks native support for the `ChatTS` model, we have provided a [patch](chatts/vllm/chatts_vllm.py) to enable vLLM to support inference. Therefore, before using vLLM to load the model, please make sure that the code includes: `import chatts.vllm.chatts_vllm` to register the ChatTS model in vLLM. Please refer to the following steps to use vLLM to load ChatTS:
 
-1. Install `vllm==0.6.6.post1` (please ensure that you have installed the exact version as vLLM's multimodal APIs change frequently).
+1. Install `vllm==0.8.5` (please ensure that you have installed the exact version as vLLM's multimodal APIs change frequently).
 2. Please refer to `demo_vllm.py` for detailed usage methods.
 
 A simple example of using vLLM to load ChatTS: 

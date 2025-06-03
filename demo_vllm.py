@@ -46,7 +46,7 @@ ts2[100] += 10.0
 prompt = f"I have 2 time series. TS1 is of length {SEQ_LEN_1}: <ts><ts/>; TS2 if of length {SEQ_LEN_2}: <ts><ts/>. Please analyze the local changes in these time series first and then conclude if these time series showing local changes near the same time?"
 prompt = f"<|im_start|>system\nYou are a helpful assistant.<|im_end|><|im_start|>user\n{prompt}<|im_end|><|im_start|>assistant\n"
 
-mm_data = {"timeseries": [ts1, ts2]}
+mm_data = {"timeseries": [ts1.tolist(), ts2.tolist()]}
 inputs = {
     "prompt": prompt,
     "multi_modal_data": mm_data

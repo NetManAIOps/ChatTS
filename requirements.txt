@@ -3,14 +3,14 @@ scipy
 pandas
 loguru
 deepspeed
-torch==2.5.1
-transformers
+torch==2.6.0
+transformers==4.52.4
 flash-attn
 PyWavelets
 matplotlib
 tqdm
 sktime
-vllm==0.6.6.post1
+vllm==0.8.5
 ragas==0.1.9
 langchain==0.2.15
 langchain-chroma==0.1.1

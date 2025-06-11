@@ -286,7 +286,7 @@ def generate_prompt_data(seq_len: int=256):
                 "noise": [i, j],
                 "statistic": [i, j]
             })
-            cur_answer = f"{combined_metrics[i]}: " + attribute_to_text(combined_timeseries[i], combined_attributes[i], generate_values=False) + f"; {combined_metrics[j]}: " + attribute_to_text(combined_timeseries[j], combined_attributes[j], generate_values=False)
+            cur_answer = f"{combined_metrics[i]}: " + attribute_to_text(original_timeseries[i], combined_attributes[i], generate_values=False) + f"; {combined_metrics[j]}: " + attribute_to_text(original_timeseries[j], combined_attributes[j], generate_values=False)
             if i in positive_indicies and j in positive_indicies:
                 # Similar
                 cur_answer += f" Both metrics show sudden changes around point {positive_change_position}, indicating a possible correlation in terms of fluctuation. <|prompt{all_prompt_idx}|>"

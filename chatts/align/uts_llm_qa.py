@@ -92,7 +92,7 @@ def generate_prompt_data():
         attribute_pool = generate_controlled_attributes(metric_to_controlled_attributes(metric))
 
     attribute_pool['metric_name'] = metric
-    attribute_pool['category'] = category
+    attribute_pool['situation'] = category
 
     timeseries, attribute_pool = generate_time_series(attribute_pool, current_seq_len)
 

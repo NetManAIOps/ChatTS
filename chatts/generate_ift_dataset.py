@@ -23,14 +23,13 @@ import traceback
 
 # Config
 ENCODING_METHOD = 'sp'
-SEQ_LEN = 256
-NUM_DATA = 15000
+TARGET_CNT = 10000
 OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
-OUTPUT_PATH = f'{OUTPUT_BASE_DIR}/ift_{SEQ_LEN}_{ENCODING_METHOD}.jsonl'
+OUTPUT_PATH = f'{OUTPUT_BASE_DIR}/ift_256_{ENCODING_METHOD}.jsonl'
 LABEL_FILES = [
-    f'{OUTPUT_BASE_DIR}/labels/mts_local_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.json',
-    f'{OUTPUT_BASE_DIR}/labels/mts_shape_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.json',
-    f'{OUTPUT_BASE_DIR}/labels/uts_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.json'
+    f'{OUTPUT_BASE_DIR}/labels/mts_local_llm_256_15000_{ENCODING_METHOD}.json',
+    f'{OUTPUT_BASE_DIR}/labels/mts_shape_llm_256_15000_{ENCODING_METHOD}.json',
+    f'{OUTPUT_BASE_DIR}/labels/uts_llm_256_15000_{ENCODING_METHOD}.json'
 ]
 ALL_LOCAL_TYPES = {'increase after downward spike', 'increase after upward spike', 'upward spike', 'rapid decline followed by slow rise', 'slow rise followed by rapid decline', 'continuous upward spike', 'wide downward spike', 'slow decline followed by rapid rise', 'upward convex', 'shake', 'rapid rise followed by slow decline', 'sudden increase', 'downward spike', 'sudden decrease', 'continuous downward spike', 'decrease after upward spike', 'wide upward spike', 'decrease after downward spike', 'downward convex'}
 
@@ -45,7 +44,7 @@ def generate_trend(sample):
 
 def generate_trend_llm(sample):
     question = f'What is the trend of this time series? Please choose from ["steady", "decreasing", "increasing"], describe the value trend change, and conclude the llm meaning of this trend change in one sentence. Answer format: steady, the starting point value is around 32.10, and the trend change value from left to right is around 0.12. The trend indicates that the temperature is stable during the period.'
-    answer = f"{sample['label']['trend']['type']}, the starting point value is around {sample['label']['trend']['start']:.2f}, and the trend change value from left to right is around {sample['label']['trend']['amplitude']:.2f}. The trend indicates that {sample['label']['trend']['explain']}"
+    answer = f"{sample['label']['trend']['type']}, the starting point value is around {sample['label']['trend']['start']:.2f}, and the trend change value from left to right is around {sample['label']['trend']['amplitude']:.2f}. The trend indicates that {sample['label']['trend']['detail']}"
     if sample['label']['trend']['type'] == 'multiple':
         raise NotImplementedError("ift not implemented for multiple trend")
     return question, answer
@@ -61,9 +60,9 @@ def generate_season(sample):
 def generate_season_llm(sample):
     question = f'What is the periodicity of this time series? Please choose from ["no periodic fluctuation", "periodic fluctuation"], and conclude the llm meaning of the periodicity in one sentence. If there is periodic fluctuation, also describe the fluctuation frequency and amplitude. Answer format: periodic fluctuation, each period is around 20.58 points, and the amplitude of the periodic fluctuation is around 31.51. The periodic fluctuation indicates that the temperature is periodically changing in a day.'
     if 'no' in sample['label']['seasonal']['type']:
-        answer = f'no periodic fluctuation. It indicates that {sample["label"]["seasonal"]["explain"]}'
+        answer = f'no periodic fluctuation. It indicates that {sample["label"]["seasonal"]["detail"]}'
     else:
-        answer = f"periodic fluctuation, each period is around {sample['label']['frequency']['period']:.2f} points, and the amplitude of the periodic fluctuation is around {sample['label']['seasonal']['amplitude']:.2f}. It indicates that {sample['label']['seasonal']['explain']}"
+        answer = f"periodic fluctuation, each period is around {sample['label']['frequency']['period']:.2f} points, and the amplitude of the periodic fluctuation is around {sample['label']['seasonal']['amplitude']:.2f}. It indicates that {sample['label']['seasonal']['detail']}"
     return question, answer
 
 def generate_noise(sample):
@@ -90,7 +89,7 @@ def generate_local(sample):
 
 def generate_local_llm(sample):
     question = f'What are the local characteristic fluctuations of this time series? The optional types of local characteristic fluctuations include: ["' + '", "'.join(sorted(ALL_LOCAL_TYPES)) + '"]. You need to analyze all the characteristic fluctuations that appear in this time series and answer each type, position, and amplitude in the format, and conclude the llm meaning of **each** fluctuation in one sentence. Different local characteristic fluctuations should be separated by semicolons. Answer format: shake, position around point 125, amplitude 135.03. A sudden surge in public interest, likely due to significant news, a major event, or a trending topic related to the platform that rapidly captured user attention; small sudden decrease, position around point 102, amplitude 31.05. A slight increase in interest, possibly driven by minor news, promotions, or social media discussions that briefly captured attention without indicating a significant trend.'
-    answer = '; '.join([f"{i['type'] if type(i['type']) == str else i['type'][0]}, position around point {i['position_start']}, amplitude {i['amplitude']:.2f}. {i['explain'] if not i['explain'].endswith('.') else i['explain'][:-1]}" for i in sample['label']['local']])
+    answer = '; '.join([f"{i['type'] if type(i['type']) == str else i['type'][0]}, position around point {i['position_start']}, amplitude {i['amplitude']:.2f}. {i['detail'] if not i['detail'].endswith('.') else i['detail'][:-1]}" for i in sample['label']['local']])
 
     if len(sample['label']['local']) == 0:
         answer = 'No local characteristic fluctuations found.'
@@ -101,12 +100,14 @@ def generate_local_llm(sample):
             'type': i['type'],
             'position': i['position_start'],
             'amplitude': round(i['amplitude'], 2),
-            'explain': i['explain']
+            'explain': i['detail']
         })
     return question, answer
 
 # L2: correlation and cluster
-def generate_trend_correlation_llm(sample):
+def generate_shape_correlation_llm(sample):
+    if len(sample['label']['correlations']) == 0:
+        raise NotImplementedError("ift not implemented for shape correlation with empty correlations")
     pairs = random.choice(sample['label']['correlations'])
     question = f'From the perspective of the overall trend, do {pairs["pair"][0]} and {pairs["pair"][1]} have very similar trend characteristics? Just answer yes or no, and explain why they are correlated/no correlated considering their llm meaning in one sentence. Answer format: Yes. Both metrics are related to the same system component, so they are highly correlated.'
     if pairs['label']:
@@ -142,7 +143,7 @@ def generate_fluctuation_correlation_llm(sample):
         features['pair'] = [[m, get_fluctuation_type(m)] for m in pairs['pair']]
     return question, answer
 
-def generate_trend_cluster_llm(sample):
+def generate_shape_cluster_llm(sample):
     cluster = random.choice(sample['label']['clusters'])
     question = f'From the perspective of the overall trend, which metric(s) have very similar trend characteristics with {random.choice(cluster["cols"])}? List the metrics (including itself) and explain why they have similar overall trend considering their llm meaning in one sentence. Answer format: A, B, C. All metrics are related to the same system component, so they may have similar overall trend.'
     answer = ', '.join(cluster['cols']) + '. ' + cluster['explain']
@@ -165,7 +166,7 @@ def generate_qa(sample, filename: str):
         candidate_funcs += [generate_trend, generate_season, generate_noise, generate_local, generate_trend_llm, generate_season_llm, generate_local_llm]
         llm_flag = True
     if 'shape' in filename:
-        candidate_funcs += [generate_trend_correlation_llm, generate_trend_cluster_llm]
+        candidate_funcs += [generate_shape_correlation_llm, generate_shape_cluster_llm]
         mts_flag = True
         llm_flag = True
     if 'local' in filename:
@@ -237,15 +238,20 @@ def generate_dataset():
     filenames = filenames
 
     result = []
-    for i, sample in enumerate(tqdm(samples)):
-        # Augment label
-        try:
-            qa = generate_qa(sample, filenames[i])
-        except Exception as err:
-            print(err)
-            continue
-        if qa is not None:
-            result.append(qa)
+    with tqdm(total=TARGET_CNT, desc='Generating samples') as pbar:
+        while len(result) < TARGET_CNT:
+            idx = random.randint(0, len(samples) - 1)
+            sample = copy.deepcopy(samples[idx])
+            try:
+                qa = generate_qa(sample, filenames[idx])
+            except NotImplementedError as err:
+                continue
+            except Exception as err:
+                traceback.print_exc()
+                continue
+            if qa is not None:
+                result.append(qa)
+                pbar.update(1)
     
     print("Saving dataset...")
     with open(OUTPUT_PATH, 'wt') as f:

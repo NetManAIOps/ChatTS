@@ -693,10 +693,10 @@ def generate_local_chars(attribute_pool, overall_amplitude, seq_len):
             })
             updated_local.append(local_char)
         except KeyError as e:
-            print(f"Warning: {e}. Skipping this change.")
+            # print(f"Warning: {e}. Skipping this change.")
             continue
         except Exception as e:
-            traceback.print_exc()
+            # traceback.print_exc()
             # print(f"Warning: {e}. Skipping this change.")
             continue
     

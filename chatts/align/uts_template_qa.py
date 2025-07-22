@@ -19,7 +19,7 @@ import re
 import json
 import copy
 from typing import *
-from chatts.ts_generator import generate_random_attributes, generate_time_series, attribute_to_text, all_attribute_set
+from chatts.ts_generator.generate import generate_random_attributes, generate_time_series, attribute_to_text, all_attribute_set
 from chatts.encoding_utils import timeseries_encoding, timeseries_to_list
 import os
 

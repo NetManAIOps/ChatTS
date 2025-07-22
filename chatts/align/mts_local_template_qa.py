@@ -18,7 +18,7 @@ from tqdm import tqdm
 import re
 import json
 from typing import *
-from chatts.ts_generator import generate_random_attributes, generate_time_series, attribute_to_text
+from chatts.ts_generator.generate import generate_random_attributes, generate_time_series, attribute_to_text
 from chatts.encoding_utils import timeseries_encoding, timeseries_to_list
 import copy
 import os
@@ -92,7 +92,7 @@ def generate_positive_timeseries(cnt: int, seq_len: int = 256) -> Tuple[List[np.
     attributes = []
     for _ in range(cnt):
         changes = {(int(change_position + random.uniform(-10, 10)), None)}
-        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], changes.copy())
+        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], changes.copy(), seq_len)
         ts, attribute_pool = generate_time_series(attribute_pool, seq_len)
         timeseries.append(ts)
         attributes.append(attribute_pool)
@@ -128,7 +128,7 @@ def generate_negative_timeseries(cnt: int, positive_positions: List[int], seq_le
         else:
             changes = set()
         
-        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], changes)
+        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], changes, seq_len)
         ts, attribute_pool = generate_time_series(attribute_pool, seq_len)
         timeseries.append(ts)
         attributes.append(attribute_pool)

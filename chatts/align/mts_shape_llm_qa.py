@@ -18,11 +18,11 @@ from tqdm import tqdm
 import re
 import json
 from typing import *
-from chatts.ts_generator import generate_time_series, generate_controlled_attributes, attribute_to_text, generate_random_attributes
+from chatts.ts_generator.generate import generate_time_series, generate_controlled_attributes, attribute_to_text, generate_random_attributes
 from chatts.llm_utils import llm_batch_generate
 from chatts.encoding_utils import timeseries_encoding, timeseries_to_list
 from chatts.attribute_utils import metric_to_controlled_attributes
-from chatts.trend_utils import generate_trend_curve, generate_random_points, generate_trend_prompt
+from chatts.ts_generator.trend_utils import generate_trend_curve, generate_random_points, generate_trend_prompt
 import copy
 import os
 
@@ -99,7 +99,7 @@ def generate_positive_timeseries(cnt: int, seq_len: int = 256) -> Tuple[List[np.
             changes = {(None, None)}
         else:
             changes = {}
-        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], changes.copy())
+        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], changes.copy(), seq_len)
         ts, attribute_pool = generate_time_series(attribute_pool, seq_len)
 
         # Add some changes to points
@@ -129,7 +129,7 @@ def generate_negative_timeseries(cnt: int, positive_points: List[Tuple[int, floa
             changes = {(None, None)}
         else:
             changes = {}
-        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], changes.copy())
+        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], changes.copy(), seq_len)
         ts, attribute_pool = generate_time_series(attribute_pool, seq_len)
 
         if random.random() > 0.7 or len(positive_points) <= 3:

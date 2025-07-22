@@ -19,7 +19,7 @@ import re
 import json
 import copy
 from typing import *
-from chatts.ts_generator import generate_random_attributes, generate_time_series
+from chatts.ts_generator.generate import generate_random_attributes, generate_time_series
 from sktime.classification.kernel_based import RocketClassifier
 
 

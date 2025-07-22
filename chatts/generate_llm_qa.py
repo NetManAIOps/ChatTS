@@ -22,7 +22,7 @@ import random
 from tqdm import tqdm
 import json
 from typing import *
-from chatts.ts_generator import generate_time_series, generate_controlled_attributes, attribute_to_text
+from chatts.ts_generator.generate import generate_time_series, generate_controlled_attributes, attribute_to_text
 from chatts.llm_utils import llm_batch_generate, parse_llm_json
 from chatts.encoding_utils import timeseries_encoding, timeseries_to_list
 from chatts.attribute_utils import metric_to_controlled_attributes
@@ -57,7 +57,7 @@ def generate_prompt_data():
     fields = []
 
     # Choose a metric and generate
-    attribute_pool = generate_controlled_attributes(metric_to_controlled_attributes(metric))
+    attribute_pool = generate_controlled_attributes(metric_to_controlled_attributes(metric), seq_len=current_seq_len)
     timeseries, attribute_pool = generate_time_series(attribute_pool, current_seq_len)
 
     # Scalar

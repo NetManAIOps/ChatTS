@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Note: You have to install `vllm==0.6.6.post1`.
+# Note: You have to install `vllm==0.8.5`.
 # Note: This is a beta version, which may change in the future.
 # Note: `chatts.vllm.chatts_vllm` has to be imported here first as it will rigister the custom ChatTS module and the multimodal processor.
 import chatts.vllm.chatts_vllm

@@ -24,7 +24,7 @@ from tqdm import tqdm
 import json
 import os
 from typing import *
-from chatts.ts_generator import generate_controlled_attributes, generate_time_series, attribute_to_text
+from chatts.ts_generator.generate import generate_controlled_attributes, generate_time_series, attribute_to_text
 from chatts.encoding_utils import timeseries_encoding, timeseries_to_list
 from chatts.attribute_utils import metric_to_controlled_attributes
 
@@ -53,7 +53,7 @@ def univariate_seed_qa():
     metric = random.choice(sample['metrics'])
 
     # Choose a metric and generate
-    attribute_pool = generate_controlled_attributes(metric_to_controlled_attributes(metric))
+    attribute_pool = generate_controlled_attributes(metric_to_controlled_attributes(metric), seq_len=current_seq_len)
     timeseries, attribute_pool = generate_time_series(attribute_pool, current_seq_len)
 
     # Scalar
@@ -131,7 +131,7 @@ def multivariate_seed_qa():
 
     for metric in metrics:
         # Generate attribute_pool and time series for each metric
-        attribute_pool = generate_controlled_attributes(metric_to_controlled_attributes(metric))
+        attribute_pool = generate_controlled_attributes(metric_to_controlled_attributes(metric), current_seq_len)
         timeseries, attribute_pool = generate_time_series(attribute_pool, current_seq_len)
 
         # Append to lists

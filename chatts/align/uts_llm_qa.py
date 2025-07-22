@@ -18,7 +18,7 @@ from tqdm import tqdm
 import re
 import json
 from typing import *
-from chatts.ts_generator import generate_time_series, generate_controlled_attributes, attribute_to_text, generate_random_attributes
+from chatts.ts_generator.generate import generate_time_series, generate_controlled_attributes, attribute_to_text, generate_random_attributes
 from chatts.llm_utils import llm_batch_generate
 from chatts.encoding_utils import timeseries_encoding, timeseries_to_list
 from chatts.attribute_utils import metric_to_controlled_attributes
@@ -87,9 +87,9 @@ def generate_prompt_data():
 
     # Generate attribute_pool and time series
     if DISABLE_METRIC_CONFIG:
-        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'])
+        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], current_seq_len)
     else:
-        attribute_pool = generate_controlled_attributes(metric_to_controlled_attributes(metric))
+        attribute_pool = generate_controlled_attributes(metric_to_controlled_attributes(metric), seq_len=current_seq_len)
 
     attribute_pool['metric_name'] = metric
     attribute_pool['situation'] = category

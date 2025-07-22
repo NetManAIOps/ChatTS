@@ -18,7 +18,7 @@ from tqdm import tqdm
 import re
 import json
 from typing import *
-from chatts.ts_generator import generate_time_series, generate_controlled_attributes, attribute_to_text, generate_random_attributes
+from chatts.ts_generator.generate import generate_time_series, generate_controlled_attributes, attribute_to_text, generate_random_attributes
 from chatts.llm_utils import llm_batch_generate
 from chatts.encoding_utils import timeseries_encoding, timeseries_to_list
 import copy
@@ -116,7 +116,7 @@ def generate_positive_timeseries(cnt: int, change_position: int=None, seq_len: i
     attributes = []
     for _ in range(cnt):
         changes = {(int(change_position + random.uniform(-10, 10)), None)}
-        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], changes.copy())
+        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], changes.copy(), seq_len)
         ts, attribute_pool = generate_time_series(attribute_pool, seq_len)
         timeseries.append(ts)
         attributes.append(attribute_pool)
@@ -152,7 +152,7 @@ def generate_negative_timeseries(cnt: int, positive_positions: List[int], seq_le
         else:
             changes = set()
         
-        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], changes)
+        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], changes, seq_len)
         ts, attribute_pool = generate_time_series(attribute_pool, seq_len)
         timeseries.append(ts)
         attributes.append(attribute_pool)

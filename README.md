@@ -41,7 +41,7 @@ A fine-tuned `ChatTS` model (based on a modified version of QWen2.5-14B-Instruct
 - **2025/04/29**: The data generation code has been updated. You can generate the training datasets of `ChatTS` with the updated code now. Please refer to [Training Data Generation](#training-data-generation). We have also open-sourced the implementation for all the baseline models! Please refer to [Evaluation](#evaluation).
 - **2025/04/16**: ChatTS has been accepted by VLDB '25! We have released the training datasets for ChatTS. You can also use the code in this repo to generate data manually and do the model training.
 - **2025/01/01**: We have released a new version of `ChatTS` model, with enhanced CoT and question answering capability. Check [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-FFD21E)](https://huggingface.co/bytedance-research/ChatTS-14B) for more information.
-- **2024/12/30**: A experimental version of `vLLM` support for ChatTS is available! Check [demo_vllm.py](demo_vllm.py) for more information. (**Note**: This version is still under development and may not be stable.) We have also updated the ChatTS model implementation, which supports `kv_cache` and `AutoProcessor` now.
+- **2024/12/30**: A experimental version of `vLLM` support for ChatTS is available! Check [demo_vllm.py](examples/demo_vllm.py) for more information. (**Note**: This version is still under development and may not be stable.) We have also updated the ChatTS model implementation, which supports `kv_cache` and `AutoProcessor` now.
 
 ## Introduction
 This repository provides several toolkits for generating synthetic data with the approaches introduced in `ChatTS`, as well as the evaluation code and evaluation datasets for reproduction. 
@@ -69,7 +69,7 @@ We have provided:
 - Example code for generating a training dataset with LLMs: `chatts/generate_llm_qa`, which can be further used as seed QAs for TSEvol.
 - Code implementation for `TSEvol` with the generated seed QAs: `chatts/evol/evol_instruct.py`.
 - Code implementation for evaluation: `evaluation/`.
-- Simple demos for inference: `demo_hf.ipynb` and `demo_vllm.py`.
+- Simple demos for inference: `examples/demo_hf.ipynb` and `examples/demo_vllm.py`.
 - A trained `ChatTS` model (fine-tuned based on a modified version of QWen2.5-14B-Instruct) at [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-FFD21E)](https://huggingface.co/bytedance-research/ChatTS-14B).
 - Training datasets: [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Datasets-FFD21E)](https://huggingface.co/datasets/ChatTSRepo/ChatTS-Training-Dataset)
 - Evaluations datasets: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14349206.svg)](https://doi.org/10.5281/zenodo.14349206).
@@ -84,8 +84,8 @@ We have provided:
 
 ### Try the ChatTS Model
 - Following the steps in `Installation` to download the trained `ChatTS` model and place it under `ckpt`. 
-- The ChatTS model can be loaded directly using the `transformers` library. **Refer to `demo_hf.ipynb` for more information.**
-- **About `sp` Encoding.** To facilitate the input of variable-length batch time series, we adopted a method named `sp` encoding when encoding the time series. For each time series data point, an additional numerical value of 1.0 is added as a mask. For convenience, we have a Processor which can be loaded with `AutoProcessor` in `transformers` to normalize and convert the time series and text (Value-Preserved Time Series Encoding). Please refer to `demo_hf.ipynb` for more information about their usage. 
+- The ChatTS model can be loaded directly using the `transformers` library. **Refer to `examples/demo_hf.ipynb` for more information.**
+- **About `sp` Encoding.** To facilitate the input of variable-length batch time series, we adopted a method named `sp` encoding when encoding the time series. For each time series data point, an additional numerical value of 1.0 is added as a mask. For convenience, we have a Processor which can be loaded with `AutoProcessor` in `transformers` to normalize and convert the time series and text (Value-Preserved Time Series Encoding). Please refer to `examples/demo_hf.ipynb` for more information about their usage. 
 - An example usage of ChatTS (with `HuggingFace`):
 ```python
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor
@@ -116,7 +116,7 @@ print(tokenizer.decode(outputs[0][len(inputs['input_ids'][0]):], skip_special_to
 Since [vLLM](https://github.com/vllm-project/vllm) lacks native support for the `ChatTS` model, we have provided a [patch](chatts/vllm/chatts_vllm.py) to enable vLLM to support inference. Therefore, before using vLLM to load the model, please make sure that the code includes: `import chatts.vllm.chatts_vllm` to register the ChatTS model in vLLM. Please refer to the following steps to use vLLM to load ChatTS:
 
 1. Install `vllm==0.8.5` (please ensure that you have installed the exact version as vLLM's multimodal APIs change frequently).
-2. Please refer to `demo_vllm.py` for detailed usage methods.
+2. Please refer to `examples/demo_vllm.py` for detailed usage methods.
 
 A simple example of using vLLM to load ChatTS: 
 ```python
@@ -170,6 +170,9 @@ You should find the inference results under `exp/` folder, which will be further
 
 ### OpenAI API Compatible Server
 You can deploy a OpenAI API compatible server with `vLLM`. Refer to [#11](https://github.com/NetManAIOps/ChatTS/issues/11) for details.
+
+### TS Generator
+We have provided a user-friendly time series generator to generate attribute pools and corresponding time series. You can refer to [examples/demo_ts_generator.ipynb](examples/demo_ts_generator.ipynb) to learn how to use it.
 
 ## Evaluation Datasets
 - Evaluation datasets (Dataset A and B) are available at https://doi.org/10.5281/zenodo.14349206. Each sample in these datasets has several parts: `timeseries`, which is the time series data itself; `question`, the query related to the time series; `answer`, the text-form standard answers provided for your reference only; `attributes`, the structured labels used to evaluate results; and `ability_types`, which indicates the types of tasks the question involves.

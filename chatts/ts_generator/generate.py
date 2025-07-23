@@ -21,12 +21,13 @@ from typing import *
 from chatts.ts_generator.trend_utils import generate_random_points, generate_trend_prompt, generate_trend_curve, generate_trend_list
 from chatts.ts_generator.local_changes import generate_local_chars
 from chatts.ts_generator.change_utils import generate_ts_change
+import yaml
 
 
 # Config
-ENABLE_MULTIPLE_TREND = True
-ENABLE_MULTIPLE_SEASONAL = False
-ENABLE_MULTIPLE_NOISE = False
+ENABLE_MULTIPLE_TREND = yaml.safe_load(open("config/datagen_config.yaml"))["enable_multiple_trend"]  # Enable or disable multiple trend types
+ENABLE_MULTIPLE_SEASONAL = yaml.safe_load(open("config/datagen_config.yaml"))["enable_multiple_seasonal"]  # Enable or disable multiple seasonal types
+ENABLE_MULTIPLE_NOISE = yaml.safe_load(open("config/datagen_config.yaml"))["enable_multiple_noise"]  # Enable or disable multiple noise types
 
 # All Config for TS Attributes
 # Notes
@@ -526,6 +527,8 @@ def generate_time_series(attribute_pool, seq_len=512):
 
         def replacer(match):
             n = int(match.group(1))
+            if n < 0 or n >= seq_len:
+                print(local_char["detail"], seq_len)
             return f"{y[n]:.2f}"
         local_char['detail'] = pattern.sub(replacer, local_char['detail'])
 

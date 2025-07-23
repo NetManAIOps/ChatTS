@@ -1,0 +1,35 @@
+# ===============================Please edit the following part=============================
+# Configuration for LLM (you must set them manually)
+local_llm_path: "[LOCAL_LLM_PATH]"
+num_gpus: 8
+gpu_per_model: 1
+
+# Output dir of the generated datasets
+data_output_dir: "data"
+# ===============================Please edit the above part=================================
+
+
+# ===================================Optional Config========================================
+# Encoding Method: sp (proprocessing + encoding) / no (no proprocessing and encoding) (default: sp)
+encoding_method: "sp"
+
+# Sequence length of the generated time series (set to null for random length) (default: 256)
+seq_len: 256
+
+# Whether to disable extreme lengths (<64, >1024) (default: false)
+disable_extreme_lengths: false
+
+# Disable config of attributes from metrics (default: false)
+disable_metric_config: false
+
+# Whether to output the error information in ts_generator (default: false)
+local_change_verbose: false
+
+# Just use the default settings below
+enable_drop_prompt: false
+enable_multiple_trend: true
+enable_multiple_seasonal: false
+enable_multiple_noise: false
+
+# Set to true for debug usage only (default: false)
+dryrun: true

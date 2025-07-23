@@ -15,7 +15,7 @@
 import numpy as np
 import json
 
-from chatts.evol.attributes import attribute_prompt
+from chatts.sft.utils.evol_attributes import attribute_prompt
 from typing import *
 
 

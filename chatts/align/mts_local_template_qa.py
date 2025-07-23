@@ -19,16 +19,17 @@ import re
 import json
 from typing import *
 from chatts.ts_generator.generate import generate_random_attributes, generate_time_series, attribute_to_text
-from chatts.encoding_utils import timeseries_encoding, timeseries_to_list
+from chatts.utils.encoding_utils import timeseries_encoding, timeseries_to_list
+import yaml
 import copy
 import os
 
 
 # CONFIG
 NUM_DATA = 20000
-SEQ_LEN = 256
-ENCODING_METHOD = 'sp'
-OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
+SEQ_LEN = yaml.safe_load(open("config/datagen_config.yaml"))["seq_len"]  # Set to None for random length
+ENCODING_METHOD = yaml.safe_load(open("config/datagen_config.yaml"))["encoding_method"]
+OUTPUT_BASE_DIR = yaml.safe_load(open("config/datagen_config.yaml"))["data_output_dir"]
 OUTPUT_PATH = f'{OUTPUT_BASE_DIR}/mts_local_template_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.jsonl'
 
 

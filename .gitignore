@@ -1,8 +1,10 @@
 *.DS_Store
 *__pycache__
-evaluation/dataset
+evaluation/dataset/*
+!evaluation/dataset/.gitkeep
 result/
 labels/
 sensitive_info_result.txt
 .vscode/
 data/
+exp/

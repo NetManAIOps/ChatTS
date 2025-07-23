@@ -20,16 +20,18 @@ import json
 import copy
 from typing import *
 from chatts.ts_generator.generate import generate_random_attributes, generate_time_series, attribute_to_text, all_attribute_set
-from chatts.encoding_utils import timeseries_encoding, timeseries_to_list
+from chatts.utils.encoding_utils import timeseries_encoding, timeseries_to_list
+import yaml
 import os
 
 
 # CONFIG
 NUM_DATA = 20000
-SEQ_LEN = 256
-ENCODING_METHOD = 'sp'
-OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
+SEQ_LEN = yaml.safe_load(open("config/datagen_config.yaml"))["seq_len"]  # Set to None for random length
+ENCODING_METHOD = yaml.safe_load(open("config/datagen_config.yaml"))["encoding_method"]
+OUTPUT_BASE_DIR = yaml.safe_load(open("config/datagen_config.yaml"))["data_output_dir"]
 OUTPUT_PATH = f'{OUTPUT_BASE_DIR}/uts_template_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.jsonl'
+DISABLE_EXTREME_LENGTHS = yaml.safe_load(open("config/datagen_config.yaml"))["disable_extreme_lengths"]
 
 
 def attribute_pool_to_json(attribute_pool: dict) -> str:
@@ -48,10 +50,15 @@ def attribute_pool_to_json(attribute_pool: dict) -> str:
 
 def generate_single_dataset():
     if SEQ_LEN is None:
-        if random.random() > 0.4:
+        p = random.random()
+        if p > 0.4:
             current_seq_len = 256
-        else:
+        elif p > 0.1 or DISABLE_EXTREME_LENGTHS:
             current_seq_len = random.randint(64, 1024)
+        elif p > 0.05:
+            current_seq_len = random.randint(5, 64)
+        else:
+            current_seq_len = random.randint(1024, 4096)
     else:
         current_seq_len = SEQ_LEN
 

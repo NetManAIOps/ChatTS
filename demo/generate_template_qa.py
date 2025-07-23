@@ -13,27 +13,28 @@
 # limitations under the License.
 
 """
-    This script is used to generate the stage-1 data with a set of prompts, which can be further used as seed QAs for TSEvol.
+    This script is an example, which generates the data with a set of prompts. The data can be further used as seed QAs for TSEvol.
     We only show some simple templates here for demonstration. You can modify the code to generate your own QA dataset.
     Usage:
-        python3 -m chatts.generate_template_qa
+        python3 -m demo.generate_template_qa
 """
 
 import random
 from tqdm import tqdm
 import json
+import yaml
 import os
 from typing import *
 from chatts.ts_generator.generate import generate_controlled_attributes, generate_time_series, attribute_to_text
-from chatts.encoding_utils import timeseries_encoding, timeseries_to_list
-from chatts.attribute_utils import metric_to_controlled_attributes
+from chatts.utils.encoding_utils import timeseries_encoding, timeseries_to_list
+from chatts.utils.attribute_utils import metric_to_controlled_attributes
 
 
 # CONFIG
-ENCODING_METHOD = 'sp'
-SEQ_LEN = 256  # Set to none for random seq_len
+ENCODING_METHOD = yaml.safe_load(open('config/datagen_config.yaml', 'rt'))['encoding_method']
+SEQ_LEN = yaml.safe_load(open('config/datagen_config.yaml', 'rt'))['seq_len']  # Set to none for random seq_len
+OUTPUT_BASE_DIR = yaml.safe_load(open('config/datagen_config.yaml', 'rt'))['data_output_dir']
 TOTAL_CNT = 1000
-OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
 OUTPUT_DATASET = f'{OUTPUT_BASE_DIR}/template_qa_{TOTAL_CNT}_{ENCODING_METHOD}.jsonl'
 OUTPUT_LABEL = f'{OUTPUT_BASE_DIR}/evol_labels/template_qa_{TOTAL_CNT}_{ENCODING_METHOD}.json'
 

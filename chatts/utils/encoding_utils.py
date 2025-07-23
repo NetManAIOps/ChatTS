@@ -36,11 +36,16 @@ def sp_encoding(timeseries: np.ndarray):
 
     return result_timeseries, prompt, {'offset': float(-mean), 'scale_factor': float(scale_factor)}
 
+def no_encoding(timeseries: np.ndarray):
+    return np.array(timeseries), "<ts><ts/>", {}
+
 def timeseries_encoding(timeseries: np.ndarray, method: str):
     if method == 'minmax_scale':
         return minmax_scale_encoding(timeseries)
     elif method == 'sp':
         return sp_encoding(timeseries)
+    elif method == 'no':
+        return no_encoding(timeseries)
     else:
         raise NotImplementedError(f"Timeseries encoding method: {method} not implemented!")
 

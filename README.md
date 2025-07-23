@@ -28,25 +28,36 @@ ChatTS is a Multimodal LLM built natively for time series as a core modality：
 Here is an example of a ChatTS application, which allows users to interact with a LLM to understand and reason about time series data:
 ![Chat](figures/chat_example.png)
 
-### More Examples
-
-Check out the [Case Studies](#case-studies) section for real-world applications and sample conversations.
+Check out the [Case Studies](#case-studies) section for more real-world applications and sample conversations.
 
 
 <!-- We also provide the evaluation datasets collected by us. You can download the evaluation datasets from [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14349206.svg)](https://doi.org/10.5281/zenodo.14349206). The training scripts can be found in [ChatTS-Training](https://github.com/xiezhe-24/ChatTS-Training).
 A fine-tuned `ChatTS` model (based on a modified version of QWen2.5-14B-Instruct) have been open-sourced at [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-FFD21E)](https://huggingface.co/bytedance-research/ChatTS-14B). You can download and try it! -->
+
+## Quick Start
+- **Installation:**
+  - [Step 1: Download the ChatTS-14B Model, Training and Evaluation Datasets](#resource-links)
+  - [Step 2: Install the dependencies](#installation)
+- **Deployment:**
+  - [Option 1: Inference with Transformers](#try-the-chatts-model) (refer to [demo/demo_hf.ipynb](demo/demo_hf.ipynb))
+  - [Option 2: vLLM Offline Inference](#vllm-inference) (refer to [demo/demo_vllm.py](demo/demo_vllm.py))
+  - [Option 3: OpenAI API Compatible Server with vLLM](#openai-api-compatible-server)
+- **Training:**
+  - [Step 1: Generate Alignment and SFT Datasets](#training-data-generation)
+  - [Step 2: Fine-tuning Your own Models](#fine-tuning-your-own-model)
+  - [Optional: Use the TS Generator Manually](#ts-generator) (refer to [demo/demo_ts_generator.py](demo/demo_ts_generator.ipynb))
+- **Evaluation:**
+  - [Step 1: Generate Answers with DeepSpeed](#deepspeed-model-inference-for-evaluation)
+  - [Step 2: Evaluate the Models](#evaluation)
 
 ## News
 - **2025/07/03**: `ChatTS-14B-GPTQ-4bit` is available at [HuggingFace](https://huggingface.co/xiezhe24/ChatTS-14B-GPTQ-Int4)!
 - **2025/04/29**: The data generation code has been updated. You can generate the training datasets of `ChatTS` with the updated code now. Please refer to [Training Data Generation](#training-data-generation). We have also open-sourced the implementation for all the baseline models! Please refer to [Evaluation](#evaluation).
 - **2025/04/16**: ChatTS has been accepted by VLDB '25! We have released the training datasets for ChatTS. You can also use the code in this repo to generate data manually and do the model training.
 - **2025/01/01**: We have released a new version of `ChatTS` model, with enhanced CoT and question answering capability. Check [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-FFD21E)](https://huggingface.co/bytedance-research/ChatTS-14B) for more information.
-- **2024/12/30**: A experimental version of `vLLM` support for ChatTS is available! Check [demo_vllm.py](examples/demo_vllm.py) for more information. (**Note**: This version is still under development and may not be stable.) We have also updated the ChatTS model implementation, which supports `kv_cache` and `AutoProcessor` now.
+- **2024/12/30**: A experimental version of `vLLM` support for ChatTS is available! Check [demo_vllm.py](demo/demo_vllm.py) for more information. (**Note**: This version is still under development and may not be stable.) We have also updated the ChatTS model implementation, which supports `kv_cache` and `AutoProcessor` now.
 
-## Introduction
-This repository provides several toolkits for generating synthetic data with the approaches introduced in `ChatTS`, as well as the evaluation code and evaluation datasets for reproduction. 
-
-**Resource Links:**
+## Resource Links
 
 <div align="center">
 
@@ -58,24 +69,25 @@ This repository provides several toolkits for generating synthetic data with the
 | Training Datasets        | [Hugging Face Dataset](https://huggingface.co/datasets/ChatTSRepo/ChatTS-Training-Dataset) | Synthetic training set              |
 | Evaluation Datasets     | [Zenodo](https://doi.org/10.5281/zenodo.14349206)                                 | Real & synthetic eval data          |
 | Training Scripts     | [ChatTS-Training](https://github.com/xiezhe-24/ChatTS-Training)                   | Training Scripts for ChatTS                    |
-| Data Generation | [# Training Data Generation](#training-data-generation) | Synthetic Data Generation |
-| Evaluation Code | [# Evaluation](#evaluation) | Model Evaluation |
 
 </div>
 
+## Introduction
+This repository provides several toolkits for generating synthetic data with the approaches introduced in `ChatTS`, as well as the evaluation code and evaluation datasets for reproduction. 
+
 We have provided:
-- Toolkits for generating synthetic time series data and the corresponding attribues: `chatts/ts_generator.py`.
-- Example code for generating a training dataset with pre-defined templates: `chatts/generate_template_qa.py`, which can be further used as seed QAs for TSEvol.
-- Example code for generating a training dataset with LLMs: `chatts/generate_llm_qa`, which can be further used as seed QAs for TSEvol.
-- Code implementation for `TSEvol` with the generated seed QAs: `chatts/evol/evol_instruct.py`.
+- Toolkits for generating synthetic time series data and the corresponding attribues: `chatts/ts_generator/generate.py`.
+- Example code for generating a training dataset with pre-defined templates: `demo/generate_template_qa.py`, which can be further used as seed QAs for TSEvol.
+- Example code for generating a training dataset with LLMs: `chatts/sft/generate_llm_qa`, which can be further used as seed QAs for TSEvol.
+- Code implementation for `TSEvol` with the generated seed QAs: `chatts/sft/generate_tsevol_dataset.py`.
 - Code implementation for evaluation: `evaluation/`.
-- Simple demos for inference: `examples/demo_hf.ipynb` and `examples/demo_vllm.py`.
+- Simple demos for inference: `demo/demo_hf.ipynb` and `demo/demo_vllm.py`.
 - A trained `ChatTS` model (fine-tuned based on a modified version of QWen2.5-14B-Instruct) at [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-FFD21E)](https://huggingface.co/bytedance-research/ChatTS-14B).
 - Training datasets: [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Datasets-FFD21E)](https://huggingface.co/datasets/ChatTSRepo/ChatTS-Training-Dataset)
 - Evaluations datasets: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14349206.svg)](https://doi.org/10.5281/zenodo.14349206).
 - **Training scripts**: [ChatTS-Training](https://github.com/xiezhe-24/ChatTS-Training).
 
-## How To Use
+## Getting Started
 ### Installation
 - Basic requirements for model inference: `python>=3.11`, `deepspeed`, `vllm==0.8.5`, `torch==2.6.0`, `flash-attn` (refer to `requirements.txt`).
 - Download the evaluation datasets from [Zenodo](https://doi.org/10.5281/zenodo.14349206) and put them under `evaluation/dataset` (`evaluation/dataset/dataset_a.json` and `evaluation/dataset/dataset_b.json`).
@@ -84,8 +96,8 @@ We have provided:
 
 ### Try the ChatTS Model
 - Following the steps in `Installation` to download the trained `ChatTS` model and place it under `ckpt`. 
-- The ChatTS model can be loaded directly using the `transformers` library. **Refer to `examples/demo_hf.ipynb` for more information.**
-- **About `sp` Encoding.** To facilitate the input of variable-length batch time series, we adopted a method named `sp` encoding when encoding the time series. For each time series data point, an additional numerical value of 1.0 is added as a mask. For convenience, we have a Processor which can be loaded with `AutoProcessor` in `transformers` to normalize and convert the time series and text (Value-Preserved Time Series Encoding). Please refer to `examples/demo_hf.ipynb` for more information about their usage. 
+- The ChatTS model can be loaded directly using the `transformers` library. **Refer to `demo/demo_hf.ipynb` for more information.**
+- **About `sp` Encoding.** To facilitate the input of variable-length batch time series, we adopted a method named `sp` encoding when encoding the time series. For each time series data point, an additional numerical value of 1.0 is added as a mask. For convenience, we have a Processor which can be loaded with `AutoProcessor` in `transformers` to normalize and convert the time series and text (Value-Preserved Time Series Encoding). Please refer to `demo/demo_hf.ipynb` for more information about their usage. 
 - An example usage of ChatTS (with `HuggingFace`):
 ```python
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor
@@ -116,7 +128,7 @@ print(tokenizer.decode(outputs[0][len(inputs['input_ids'][0]):], skip_special_to
 Since [vLLM](https://github.com/vllm-project/vllm) lacks native support for the `ChatTS` model, we have provided a [patch](chatts/vllm/chatts_vllm.py) to enable vLLM to support inference. Therefore, before using vLLM to load the model, please make sure that the code includes: `import chatts.vllm.chatts_vllm` to register the ChatTS model in vLLM. Please refer to the following steps to use vLLM to load ChatTS:
 
 1. Install `vllm==0.8.5` (please ensure that you have installed the exact version as vLLM's multimodal APIs change frequently).
-2. Please refer to `examples/demo_vllm.py` for detailed usage methods.
+2. Please refer to `demo/demo_vllm.py` for detailed usage methods.
 
 A simple example of using vLLM to load ChatTS: 
 ```python
@@ -135,28 +147,27 @@ outputs = language_model.generate([{
 ```
 
 ### Training Data Generation
-1. **Alignment Data Generation.** Please first set `local_llm_path` in `config/datagen_config.json` to your local LLM for the following steps. Run `bash scripts/generate_align_datasets.sh` to generate the alignment datasets.
-2. **[To generate your own data]** We provide two examples: generate QA through Template and LLM. You can modify them according to your own task.
-  - **QA Generation with Templates**. Use `python3 -m chatts.generate_template_qa` to generate a training dataset with pre-defined templates.
-  - **QA Generation with LLMs**. You need a downloaded LLM that can be loaded with `vLLM` to perform this step. Set `[LOCAL_LLM_PATH]` in `chatts/generate_llm_qa.py` to a local LLM model (e.g., QWen2.5-32B-Instruct, **NOT ChatTS Model**) and set num_gpus, gpu_per_model accordingly. Use `python3 -m chatts.generate_llm_qa` to generate a training dataset with LLMs.
-3. **TSEvol**. You need a downloaded LLM that can be loaded with `vLLM` to perform this step. The datasets generated in **the previous step** will be used as seed QAs in TSEvol, so please make sure that you have successfully generated the previous datasets before running TSEvol. Then, refer to the steps in `chatts/evol/evol_instruct.py`:
-    1. Set `[LOCAL_LLM_PATH]` in `evol_instruct.py` to the path of a local LLM model (e.g., QWen2.5-32B-Instruct. **NOT ChatTS Model**) for QA generation and set num_gpus, gpu_per_model accordingly in `chatts/evol/evol_instruct.py`.
-    2. Run `python3 -m chatts.evol.evol_instruct`.
-    3. The output will be saved to the file specified in `OUTPUT_FILE`.
-4. **IFT Dataset**. Please generate the `alignment datasets` first! The generation of the `IFT (Instruction Following)` datasets takes the labels of the alignment datasets as input and output the ift dataset through a set of predefined templates. Run `python3 -m chatts.generate_ift_dataset` after all the alignment datasets have been successfully generated (in step 1).
+1. **Alignment Data Generation.**
+  - **Generate alignment data**. Please first set `local_llm_path` in `config/datagen_config.yaml` to your local LLM for the following steps. Run `bash scripts/generate_align_datasets.sh` to generate the alignment datasets.
+  - **(Optional) To generate your own data.** We provide an example to generate QA through Template. You can modify it according to your own task. Use `python3 -m demo.generate_template_qa` to generate a training dataset with pre-defined templates.
+2. **SFT Data Generation**
+  - **Seed QA Generation with LLMs**. Use `python3 -m chatts.sft.generate_llm_qa` to generate a seed QA dataset with LLMs. This dataset and all the previous generated alignment datasets will be used as input of TSEvol.
+  - **TSEvol**. You need a downloaded LLM that can be loaded with `vLLM` to perform this step. The datasets generated in **the previous step** will be used as seed QAs in TSEvol, so please make sure that you have successfully generated the previous datasets before running TSEvol. Run `python3 -m chatts.sft.generate_tsevol_dataset` to generate the TSEvol dataset.
+  - **IFT Dataset**. Please generate the `alignment datasets` first! The generation of the `IFT (Instruction Following)` datasets takes the labels of the alignment datasets as input and output the ift dataset through a set of predefined templates. Run `python3 -m chatts.sft.generate_ift_dataset` after all the alignment datasets have been successfully generated (in step 1).
 
 #### Notes
-- `SEQ_LEN` of generated time series can be configured by setting the `SEQ_LEN` parameter in `chatts/generate_llm_qa.py` and `chatts/generate_template_qa.py`, and all the files under `chatts/align`. In ChatTS, most of the time series are with length of 256 in the training and evaluation datasets. We also mix time series with other lengths during training (by setting `SEQ_LEN=None`) for ChatTS to adapt to time series with different lengths.
+- `SEQ_LEN` of generated time series can be configured by setting the `SEQ_LEN` parameter in `config/datagen_config.yaml`. In ChatTS, most of the time series are with length of 256 in the training and evaluation datasets. We also mix time series with other lengths during training (by setting `seq_len=null`) for ChatTS to adapt to time series with different lengths.
 
 ### Deepspeed Model Inference for Evaluation
-- We provide a simple script for inference of ChatTS (`chatts/inference_tsmllm_deepspeed.py`) with `deepspeed`. After installing `deepspeed`, please set the correct path to your evaluation dataset in the script. Then, run the following command to do the model inference:
+- Download the evaluation datasets and the ChatTS-14B checkpoints first (refer to [Installation](#installation)).
+- We provide a simple script for inference of ChatTS (`chatts/utils/inference_tsmllm_deepspeed.py`) with `deepspeed`. After installing `deepspeed`, please set the correct path to your evaluation dataset and the ChatTS model in the script. Then, run the following command to do the model inference:
 ```sh
-deepspeed --num_gpus [YOUR_NUM_GPUS] --master_port 12345 chatts/inference_tsmllm_deepspeed.py
+deepspeed --num_gpus [YOUR_NUM_GPUS] --master_port 12345 chatts/utils/inference_tsmllm_deepspeed.py
 ```
 You should find the inference results under `exp/` folder, which will be further used for evaluation.
 
 ### Evaluation
-- Generate the inference results of `ChatTS` by following the steps in `Deepspeed Model Inference for Evaluation`.
+- Generate the inference results of `ChatTS` by following the steps in [Deepspeed Model Inference for Evaluation](#deepspeed-model-inference-for-evaluation).
 - Install `ragas==0.1.9` (https://github.com/explodinggradients/ragas), which is used for evaluating the inductive reasoning results.
 - Set the `API_KEY` and `OPENAI_URL` in `evaluation/ragas/config/config.toml` (Refer to https://platform.openai.com/docs/api-reference).
 - Run `python3 -m evaluation.evaluate_tsmllm_models` to evaluate `ChatTS` (make sure you have done the model inference before).
@@ -172,7 +183,7 @@ You should find the inference results under `exp/` folder, which will be further
 You can deploy a OpenAI API compatible server with `vLLM`. Refer to [#11](https://github.com/NetManAIOps/ChatTS/issues/11) for details.
 
 ### TS Generator
-We have provided a user-friendly time series generator to generate attribute pools and corresponding time series. You can refer to [examples/demo_ts_generator.ipynb](examples/demo_ts_generator.ipynb) to learn how to use it.
+We have provided a user-friendly time series generator to generate attribute pools and corresponding time series. You can refer to [demo/demo_ts_generator.ipynb](demo/demo_ts_generator.ipynb) to learn how to use it.
 
 ## Evaluation Datasets
 - Evaluation datasets (Dataset A and B) are available at https://doi.org/10.5281/zenodo.14349206. Each sample in these datasets has several parts: `timeseries`, which is the time series data itself; `question`, the query related to the time series; `answer`, the text-form standard answers provided for your reference only; `attributes`, the structured labels used to evaluate results; and `ability_types`, which indicates the types of tasks the question involves.

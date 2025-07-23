@@ -16,7 +16,7 @@
     Main function for time series evol-instruct.
     Usage:
         1. Set MODEL_PATH to the path of the model and set num_gpus, gpu_per_model accordingly.
-        2. Run `python3 -m chatts.evol.evol_instruct_gen`.
+        2. Run `python3 -m chatts.sft.generate_tsevol_dataset`.
         3. The output will be saved to the file specified in OUTPUT_FILE.
 """
 
@@ -29,30 +29,35 @@ import re
 import numpy as np
 import random
 import time
+import yaml
 from typing import *
-from chatts.evol.prompt import EvolPrompt
-from chatts.generate_template_qa import univariate_seed_qa, multivariate_seed_qa
+from json_repair import repair_json
+from chatts.sft.utils.evol_prompt import EvolPrompt
 import copy
 
 
 # Config
-MODEL_PATH = json.load(open("config/datagen_config.json"))["local_llm_path"]
+MODEL_PATH = yaml.safe_load(open("config/datagen_config.yaml"))["local_llm_path"]
+num_gpus = yaml.safe_load(open("config/datagen_config.yaml"))["num_gpus"]
+gpu_per_model = yaml.safe_load(open("config/datagen_config.yaml"))["gpu_per_model"]
+SEQ_LEN = yaml.safe_load(open("config/datagen_config.yaml"))["seq_len"]  # Set to None to enable random sequence length selection
+DATA_OUTPUT_DIR = yaml.safe_load(open("config/datagen_config.yaml"))["data_output_dir"]
+ENCODING_METHOD = yaml.safe_load(open("config/datagen_config.yaml"))['encoding_method']
+
 ctx_length = 4096
-num_gpus = 8
-gpu_per_model = 1
 batch_size = 32
 ENGINE = 'vllm'
 MULTIPROCESS = True
 DFS_K = 3
-ENCODING_METHOD = 'sp'
 TOTAL_CNT = 100
 
 INPUT_FILES = [
-    (f'data/template_qa_1000_{ENCODING_METHOD}.jsonl', f'data/eval_labels/template_qa_1000_{ENCODING_METHOD}.json'),
-    (f'data/llm_qa_1000_{ENCODING_METHOD}.jsonl', f'data/evol_labels/llm_qa_1000_{ENCODING_METHOD}.json')
+    (f'{DATA_OUTPUT_DIR}/llm_qa_1000_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_qa_1000_{ENCODING_METHOD}.json'),
+    (f'{DATA_OUTPUT_DIR}/mts_local_llm_{SEQ_LEN}_15000_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/mts_local_llm_{SEQ_LEN}_15000_{ENCODING_METHOD}.json'),
+    (f'{DATA_OUTPUT_DIR}/mts_shape_llm_{SEQ_LEN}_15000_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/mts_shape_llm_{SEQ_LEN}_15000_{ENCODING_METHOD}.json'),
+    (f'{DATA_OUTPUT_DIR}/uts_llm_{SEQ_LEN}_15000_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/uts_llm_{SEQ_LEN}_15000_{ENCODING_METHOD}.json')
 ]
-OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
-OUTPUT_FILE = f'{OUTPUT_BASE_DIR}/evol_{TOTAL_CNT}_{ENCODING_METHOD}.jsonl'
+OUTPUT_FILE = f'{DATA_OUTPUT_DIR}/evol_{TOTAL_CNT}_{ENCODING_METHOD}.jsonl'
 
 
 def worker_vllm(input_queue, validation_queue, input_response, validation_response, gpu_id, batch_size, model_path=MODEL_PATH):
@@ -177,7 +182,7 @@ def llm_batch_generate(seed_prompts: List[EvolPrompt], use_chat_template=True, n
                 while not input_response.empty():
                     cur_items = input_response.get()
                     try:
-                        cur_qa = parse_llm_json(cur_items[0])
+                        cur_qa = json.loads(repair_json(cur_items[0]))
                         cur_seed_prompt: EvolPrompt = copy.deepcopy(cur_items[-1])
                         cur_validation_prompt = cur_seed_prompt.generate_comparison_prompt(cur_qa['question'], cur_qa['answer'])
                         cur_seed_prompt.push(cur_qa['question'], cur_qa['answer'])
@@ -221,61 +226,15 @@ def llm_batch_generate(seed_prompts: List[EvolPrompt], use_chat_template=True, n
     else:
         pass
 
-def try_fix_json(json_string, special_words=['question', 'answer', 'success', 'reference', ',', ':', '\n', '}', '{']):
-    # Fix unmatched quots
-    quotes_indices = [m.start() for m in re.finditer(r'"', json_string)]
-    fixed_json = list(json_string)
-    for i in quotes_indices:
-        for special in special_words:
-            if json_string[i + 1:].startswith(special) or json_string[:i].endswith(': '):
-                break
-        else:
-            fixed_json[i] = r'\"'
-
-    # Fix special words
-    result = ''.join(fixed_json)
-    result = result.replace('True', 'true').replace('False', 'false')
-
-    # Fix delimeters
-    result = re.sub(r'"\s*\n\s*"', '",\n"', result)
-
-    return result
-
-def escape_newlines_in_quotes(json_string):
-    matches = list(re.finditer(r'(?<!\\)"([^"\\]*(?:\\.[^"\\]*)*)"', json_string, re.DOTALL))
-    fixed_json = []
-    last_end = 0
-    
-    for match in matches:
-        start, end = match.span()
-        text_between_quotes = json_string[start:end]
-        escaped_text = text_between_quotes.replace('\n', '\\n')
-        fixed_json.append(json_string[last_end:start])
-        fixed_json.append(escaped_text)
-        last_end = end
-    
-    fixed_json.append(json_string[last_end:])
-    
-    return ''.join(fixed_json)
-
-def parse_llm_json(json_string, special_words=['question', 'answer', 'success', 'reference', ',', ':', '\n', '}', '{']):
-    json_string = json_string.replace('```json', '').replace('```', '')
-    try:
-        json.loads(json_string)
-    except Exception as err:
-        json_string = try_fix_json(json_string, special_words)
-        json_string = escape_newlines_in_quotes(json_string)
-    
-    return json.loads(json_string)
-    
 
 def evol_instruct():
     # Load files
     input_list: List[EvolPrompt] = []
 
-    print("Loading seed QA...")
-    for input_file, label_file in tqdm(INPUT_FILES, desc='Loading files'):
-        qa_dataset = [json.loads(line.rstrip()) for line in open(input_file)]
+    print("Loading files...")
+    for input_file, label_file in INPUT_FILES:
+        print(f"Loading {input_file} and {label_file}...")
+        qa_dataset = [json.loads(line.rstrip()) for line in tqdm(open(input_file))]
         labels = json.load(open(label_file))
 
         for data, label in zip(qa_dataset, labels):

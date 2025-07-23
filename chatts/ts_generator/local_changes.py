@@ -18,10 +18,12 @@ import random
 from chatts.ts_generator.change_utils import generate_ts_change, generate_spike
 import traceback
 from typing import List
+import yaml
 
 
 # Basic Config
-ENABLE_DROP_PROMPT = False  # Enable or disable drop prompt in SuddenChange
+ENABLE_DROP_PROMPT = yaml.safe_load(open("config/datagen_config.yaml"))["enable_drop_prompt"]  # Enable or disable drop prompt in SuddenChange
+LOCAL_CHANGE_VERBOSE = yaml.safe_load(open("config/datagen_config.yaml"))["local_change_verbose"]
 
 
 class BaseChange:
@@ -578,9 +580,9 @@ class WideUpwardSpikeChange(WideSpikeChange):
         
         self.position_end = self.position_start + rise_length + peak_length + fall_length
         self.detail = (
-            f"a slow rise from around <|{self.position_start - 1}|> to around <|{self.position_start + rise_length}|> occurred between point {self.position_start} and point {self.position_start + rise_length}, "
+            f"a slow rise from around <|{self.position_start}|> to around <|{self.position_start + rise_length}|> occurred between point {self.position_start} and point {self.position_start + rise_length}, "
             f"forming a short peak with an amplitude of {self.amplitude:.2f}, "
-            f"followed by a slow decline between point {self.position_start + rise_length + peak_length} and point {self.position_end} back to around <|{self.position_end + 1}|>"
+            f"followed by a slow decline between point {self.position_start + rise_length + peak_length} and point {self.position_end} back to around <|{self.position_end}|>"
         )
         
         return y
@@ -608,9 +610,9 @@ class WideDownwardSpikeChange(WideSpikeChange):
         
         self.position_end = self.position_start + drop_length + peak_length + rise_length
         self.detail = (
-            f"a slow decline from around <|{self.position_start - 1}|> to around <|{self.position_start + drop_length}|> occurred between point {self.position_start} and point {self.position_start + drop_length}, "
+            f"a slow decline from around <|{self.position_start}|> to around <|{self.position_start + drop_length}|> occurred between point {self.position_start} and point {self.position_start + drop_length}, "
             f"forming a short trough with an amplitude of {self.amplitude:.2f}, "
-            f"followed by a slow rise between point {self.position_start + drop_length + peak_length} and point {self.position_end} back to around <|{self.position_end + 1}|>"
+            f"followed by a slow rise between point {self.position_start + drop_length + peak_length} and point {self.position_end} back to around <|{self.position_end}|>"
         )
         
         return y
@@ -685,6 +687,8 @@ def generate_local_chars(attribute_pool, overall_amplitude, seq_len):
 
             # Apply the current change
             y = change_obj.apply_change(y, seq_len, overall_amplitude)
+            if change_obj.position_end >= seq_len:
+                raise ValueError(f"Change exceeds sequence length: {change_obj.position_end} >= {seq_len}. This should never happend! ({change_obj.type=}, {change_obj.position_start=}, {change_obj.amplitude=})")
             local_char.update({
                 "position_start": change_obj.position_start,
                 "position_end": change_obj.position_end,
@@ -693,11 +697,13 @@ def generate_local_chars(attribute_pool, overall_amplitude, seq_len):
             })
             updated_local.append(local_char)
         except KeyError as e:
-            # print(f"Warning: {e}. Skipping this change.")
+            if LOCAL_CHANGE_VERBOSE:
+                print(f"Warning ({seq_len=}): {e}. Skipping this change.")
             continue
         except Exception as e:
-            # traceback.print_exc()
-            # print(f"Warning: {e}. Skipping this change.")
+            if LOCAL_CHANGE_VERBOSE:
+                traceback.print_exc()
+                print(f"Error ({seq_len=}): {e}. Skipping this change.")
             continue
     
     # Order of position

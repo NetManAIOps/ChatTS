@@ -19,22 +19,24 @@ import re
 import json
 from typing import *
 from chatts.ts_generator.generate import generate_time_series, generate_controlled_attributes, attribute_to_text, generate_random_attributes
-from chatts.llm_utils import llm_batch_generate
-from chatts.encoding_utils import timeseries_encoding, timeseries_to_list
+from chatts.utils.llm_utils import llm_batch_generate
+from chatts.utils.encoding_utils import timeseries_encoding, timeseries_to_list
+import yaml
 import copy
 import os
 
 
 # CONFIG
 NUM_DATA = 15000
-SEQ_LEN = 256  # Set to None for random length
-ENCODING_METHOD = 'sp'
-OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
+SEQ_LEN = yaml.safe_load(open("config/datagen_config.yaml"))["seq_len"]  # Set to None for random length
+ENCODING_METHOD = yaml.safe_load(open("config/datagen_config.yaml"))["encoding_method"]
+OUTPUT_BASE_DIR = yaml.safe_load(open("config/datagen_config.yaml"))["data_output_dir"]
 OUTPUT_PATH = f'{OUTPUT_BASE_DIR}/mts_local_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.jsonl'
 EVOL_LABEL_PATH = f'{OUTPUT_BASE_DIR}/evol_labels/mts_local_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.json'
 CLUSTER_LABEL_PATH = f'{OUTPUT_BASE_DIR}/labels/mts_local_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.json'
-DISABLE_METRIC_CONFIG = False
-DRYRUN = False
+DISABLE_METRIC_CONFIG = yaml.safe_load(open("config/datagen_config.yaml"))["disable_metric_config"]
+DRYRUN = yaml.safe_load(open("config/datagen_config.yaml"))["dryrun"]
+
 
 # All Config for TS Features
 all_config = {
@@ -115,9 +117,16 @@ def generate_positive_timeseries(cnt: int, change_position: int=None, seq_len: i
     timeseries = []
     attributes = []
     for _ in range(cnt):
-        changes = {(int(change_position + random.uniform(-10, 10)), None)}
-        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], changes.copy(), seq_len)
-        ts, attribute_pool = generate_time_series(attribute_pool, seq_len)
+        while True:
+            try:
+                changes = {(int(change_position + random.uniform(-10, 10)), None)}
+                attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], changes.copy(), seq_len)
+                ts, attribute_pool = generate_time_series(attribute_pool, seq_len)
+                if len(attribute_pool['local']) != len(changes):
+                    raise ValueError("Generated attributes do not match the number of changes.")
+            except Exception as e:
+                continue
+            break
         timeseries.append(ts)
         attributes.append(attribute_pool)
     
@@ -134,26 +143,30 @@ def generate_negative_timeseries(cnt: int, positive_positions: List[int], seq_le
     timeseries = []
     attributes = []
     for _ in range(cnt):
-        if random.random() > 0.8:
-            candidate_position = random.randint(int(0.02 * seq_len), int(0.95 * seq_len))
-            try_cnt = 0
-            flag = True
-            while any(abs(candidate_position - pos) <= min_interval for pos in positive_positions + list(negative_positions)):
+        while True:
+            if random.random() > 0.8:
                 candidate_position = random.randint(int(0.02 * seq_len), int(0.95 * seq_len))
-                try_cnt += 1
-                if try_cnt >= 10000:
-                    flag = False
-                    break
-            if flag:
-                negative_positions.add(candidate_position)
-                changes = {(candidate_position, None)}
+                try_cnt = 0
+                flag = True
+                while any(abs(candidate_position - pos) <= min_interval for pos in positive_positions + list(negative_positions)):
+                    candidate_position = random.randint(int(0.02 * seq_len), int(0.95 * seq_len))
+                    try_cnt += 1
+                    if try_cnt >= 10000:
+                        flag = False
+                        break
+                if flag:
+                    negative_positions.add(candidate_position)
+                    changes = {(candidate_position, None)}
+                else:
+                    changes = set()
             else:
                 changes = set()
-        else:
-            changes = set()
-        
-        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], changes, seq_len)
-        ts, attribute_pool = generate_time_series(attribute_pool, seq_len)
+            
+            attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], changes, seq_len)
+            ts, attribute_pool = generate_time_series(attribute_pool, seq_len)
+            if len(attribute_pool['local']) == len(changes):
+                break
+
         timeseries.append(ts)
         attributes.append(attribute_pool)
     
@@ -163,7 +176,8 @@ def generate_prompt_data(seq_len: int=256):
     global all_prompt_idx
 
     if SEQ_LEN is None:
-        if random.random() > 0.4:
+        p = random.random()
+        if p > 0.4:
             current_seq_len = 256
         else:
             current_seq_len = random.randint(64, 1024)
@@ -216,7 +230,6 @@ def generate_prompt_data(seq_len: int=256):
             positive_change_position = random.randint(int(0.02 * current_seq_len), int(0.95 * current_seq_len))
             if all(abs(positive_change_position - pos) > current_seq_len // 5 for pos in positive_change_position_list):
                 break
-        
         cur_positive_timeseries, cur_positive_attributes, positive_change_position = generate_positive_timeseries(len(positive_cluster[i]), positive_change_position, current_seq_len)
         positive_timeseries.extend(cur_positive_timeseries)
         positive_attributes.extend(cur_positive_attributes)
@@ -392,12 +405,7 @@ def generate_dataset():
     with tqdm(total=NUM_DATA, desc='Generating prompt...') as t:
         cnt = 0
         while True:
-            try:
-                original_timeseries, combined_timeseries, combined_metrics, combined_attributes, prompt, question_list, answer_list, llm_prompt_list, fields_list, corr_pool_list, label = generate_prompt_data(SEQ_LEN)
-            except ValueError as err:
-                continue
-            except IndexError as err:
-                continue
+            original_timeseries, combined_timeseries, combined_metrics, combined_attributes, prompt, question_list, answer_list, llm_prompt_list, fields_list, corr_pool_list, label = generate_prompt_data(SEQ_LEN)
             result.append((original_timeseries, combined_timeseries, combined_metrics, combined_attributes, prompt, question_list, answer_list, llm_prompt_list, fields_list, corr_pool_list))
             labels.append(label)
             for item in llm_prompt_list:
@@ -407,12 +415,15 @@ def generate_dataset():
             if cnt >= NUM_DATA:
                 break
 
+    print(f'Generated {len(result)} data items, with {len(prompts)} prompts. {all_prompt_idx=}')
+
     # Use LLM to generate answer
     if DRYRUN:
         llm_answers = ['This is a test answer.'] * len(prompts)
     else:
         llm_answers = llm_batch_generate(prompts, use_chat_template=True)
 
+    print("Processing generated answers...")
     idx = 0
     for original_timeseries, combined_timeseries, combined_metrics, combined_attributes, prompt, question_list, answer_list, llm_prompt_list, fields_list, corr_pool_list in result:
         for i in range(len(question_list)):
@@ -434,6 +445,7 @@ if __name__ == '__main__':
     result, cluster_labels = generate_dataset()
     evol_labels = []
 
+    print("Writing to file...")
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     os.makedirs(os.path.dirname(EVOL_LABEL_PATH), exist_ok=True)
     os.makedirs(os.path.dirname(CLUSTER_LABEL_PATH), exist_ok=True)
@@ -463,3 +475,5 @@ if __name__ == '__main__':
         json.dump(cluster_labels, f, ensure_ascii=False, indent=4)
     with open(EVOL_LABEL_PATH, 'wt') as f:
         json.dump(evol_labels, f, ensure_ascii=False, indent=4)
+
+    print("Finished.")

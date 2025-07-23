@@ -20,3 +20,5 @@ langchain-experimental==0.0.64
 langchain-openai==0.1.23
 langchain-text-splitters==0.2.0
 langchainhub==0.1.16
+PyYAML
+json-repair

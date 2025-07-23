@@ -18,42 +18,25 @@ from tqdm import tqdm
 import re
 import json
 from typing import *
-from chatts.ts_generator.generate import generate_time_series, generate_controlled_attributes, attribute_to_text, generate_random_attributes
-from chatts.llm_utils import llm_batch_generate
-from chatts.encoding_utils import timeseries_encoding, timeseries_to_list
-from chatts.attribute_utils import metric_to_controlled_attributes
+from chatts.ts_generator.generate import generate_time_series, generate_controlled_attributes, attribute_to_text, generate_random_attributes, all_attribute_set
+from chatts.utils.llm_utils import llm_batch_generate
+from chatts.utils.encoding_utils import timeseries_encoding, timeseries_to_list
+from chatts.utils.attribute_utils import metric_to_controlled_attributes
+import yaml
 import os
 
 
 # CONFIG
 NUM_DATA = 15000
-SEQ_LEN = 256  # Set to None for random length
-ENCODING_METHOD = 'sp'
-OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
+SEQ_LEN = yaml.safe_load(open("config/datagen_config.yaml"))["seq_len"]  # Set to None for random length
+ENCODING_METHOD = yaml.safe_load(open("config/datagen_config.yaml"))["encoding_method"]
+OUTPUT_BASE_DIR = yaml.safe_load(open("config/datagen_config.yaml"))["data_output_dir"]
 OUTPUT_PATH = f'{OUTPUT_BASE_DIR}/uts_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.jsonl'
 LABEL_PATH = f'{OUTPUT_BASE_DIR}/labels/uts_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.json'
 EVOL_LABEL_PATH = f'{OUTPUT_BASE_DIR}/evol_labels/uts_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.json'
-DISABLE_METRIC_CONFIG = False
-DRYRUN = False
-
-# All Config for TS Features
-all_config = {
-    "overall_attribute": {
-        "seasonal": {"no periodic fluctuation": 0.7, "periodic fluctuation": 0.3},
-        "trend": {"decrease": 0.2, "increase": 0.2, "keep steady": 0.6},
-        "frequency": {"high frequency": 0.5, "low frequency": 0.5},
-        "noise": {"noisy": 0.3, "almost no noise": 0.7}
-    },
-    "change": {
-        "shake": 2, "upward spike": 10, "downward spike": 6, "continuous upward spike": 4,
-        "continuous downward spike": 2, "upward convex": 2, "downward convex": 2,
-        "sudden increase": 2, "sudden decrease": 2, "rapid rise followed by slow decline": 2,
-        "slow rise followed by rapid decline": 2, "rapid decline followed by slow rise": 2,
-        "slow decline followed by rapid rise": 2, "decrease after upward spike": 3,
-        "increase after downward spike": 3, "increase after upward spike": 3, "decrease after downward spike": 3,
-        "wide upward spike": 3, "wide downward spike": 3
-    }
-}
+DISABLE_METRIC_CONFIG = yaml.safe_load(open("config/datagen_config.yaml"))["disable_metric_config"]
+DISABLE_EXTREME_LENGTHS = yaml.safe_load(open("config/datagen_config.yaml"))["disable_extreme_lengths"]
+DRYRUN = yaml.safe_load(open("config/datagen_config.yaml"))["dryrun"]
 
 metric_config = json.load(open('config/metric_set.json', 'rt'))
 all_prompt_idx = 0
@@ -76,7 +59,15 @@ def generate_prompt_data():
     global all_prompt_idx
     # Determine sequence length
     if SEQ_LEN is None:
-        current_seq_len = 256 if random.random() > 0.4 else random.randint(64, 1024)
+        p = random.random()
+        if p > 0.4:
+            current_seq_len = 256
+        elif p > 0.1 or DISABLE_EXTREME_LENGTHS:
+            current_seq_len = random.randint(64, 1024)
+        elif p > 0.05:
+            current_seq_len = random.randint(5, 64)
+        else:
+            current_seq_len = random.randint(1024, 4096)
     else:
         current_seq_len = SEQ_LEN
 
@@ -87,7 +78,7 @@ def generate_prompt_data():
 
     # Generate attribute_pool and time series
     if DISABLE_METRIC_CONFIG:
-        attribute_pool = generate_random_attributes(all_config['overall_attribute'], all_config['change'], current_seq_len)
+        attribute_pool = generate_random_attributes(all_attribute_set['overall_attribute'], all_attribute_set['change'], seq_len=current_seq_len)
     else:
         attribute_pool = generate_controlled_attributes(metric_to_controlled_attributes(metric), seq_len=current_seq_len)
 

@@ -15,6 +15,7 @@
 import multiprocessing
 from tqdm import tqdm
 import json
+import yaml
 import os
 from loguru import logger
 import re
@@ -26,10 +27,10 @@ from typing import *
 
 
 # Config
-MODEL_PATH = json.load(open("config/datagen_config.json"))["local_llm_path"]
+MODEL_PATH = yaml.safe_load(open("config/datagen_config.yaml"))["local_llm_path"]  # Path to the local LLM model
 ctx_length = 5000
-num_gpus = 8
-gpu_per_model = 1
+num_gpus = yaml.safe_load(open("config/datagen_config.yaml"))["num_gpus"]  # Num of GPUs to use
+gpu_per_model = yaml.safe_load(open("config/datagen_config.yaml"))["gpu_per_model"]  # Num of GPUs per model
 batch_size = 32
 ENGINE = 'vllm'
 

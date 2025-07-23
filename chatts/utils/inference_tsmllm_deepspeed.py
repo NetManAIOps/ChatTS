@@ -20,13 +20,14 @@ from transformers.integrations import HfDeepSpeedConfig
 import json
 from loguru import logger
 import numpy as np
-from encoding_utils import timeseries_encoding
+from chatts.utils.encoding_utils import timeseries_encoding
 
 
 # CONFIG
 EXP = 'chatts_dataset_a'
-MODEL_PATH = f'../ckpt'
-DATASET = f'../evaluation/dataset/dataset_a.json'
+MODEL_PATH = os.path.abspath('ckpt')
+DATASET = f'./evaluation/dataset/dataset_a.json'
+WORKDIR = os.path.abspath('./')
 
 # Don't change the below config
 BATCH_SIZE = 1
@@ -106,7 +107,8 @@ def answer_question_list(question_list, ts_list, batch_size=BATCH_SIZE):
                 attention_mask=inputs['attention_mask'], 
                 timeseries=ts_tensors, 
                 synced_gpus=False, 
-                max_length=inputs['input_ids'].shape[-1] + 512
+                max_length=inputs['input_ids'].shape[-1] + 512,
+                temperature=0.2
             )
 
         for i, idx in enumerate(batch_indices):
@@ -129,7 +131,9 @@ if __name__ == '__main__':
     dataset = json.load(open(DATASET))
 
     generated_answer = []
-    os.makedirs(f"{WORKDIR}/exp/{EXP}", exist_ok=True)
+    exp_dir = os.path.join(WORKDIR, f"exp/{EXP}")
+    print(f"Experiment directory: {exp_dir}")
+    os.makedirs(exp_dir, exist_ok=True)
 
     # Generation
     logger.info("Start Generation...")
@@ -159,4 +163,4 @@ if __name__ == '__main__':
         })
 
     # Save label
-    json.dump(generated_answer, open(f"{WORKDIR}/exp/{EXP}/generated_answer_{world_size}_{local_rank}.json", "wt"), ensure_ascii=False, indent=4)
+    json.dump(generated_answer, open(os.path.join(WORKDIR, f"exp/{EXP}/generated_answer_{world_size}_{local_rank}.json"), "wt"), ensure_ascii=False, indent=4)

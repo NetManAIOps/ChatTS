@@ -19,24 +19,25 @@ import re
 import json
 from typing import *
 from chatts.ts_generator.generate import generate_time_series, generate_controlled_attributes, attribute_to_text, generate_random_attributes
-from chatts.llm_utils import llm_batch_generate
-from chatts.encoding_utils import timeseries_encoding, timeseries_to_list
-from chatts.attribute_utils import metric_to_controlled_attributes
+from chatts.utils.llm_utils import llm_batch_generate
+from chatts.utils.encoding_utils import timeseries_encoding, timeseries_to_list
+from chatts.utils.attribute_utils import metric_to_controlled_attributes
 from chatts.ts_generator.trend_utils import generate_trend_curve, generate_random_points, generate_trend_prompt
 import copy
+import yaml
 import os
 
 
 # CONFIG
 NUM_DATA = 15000
-SEQ_LEN = 256  # Set to None for random length
-ENCODING_METHOD = 'sp'
-OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
+SEQ_LEN = yaml.safe_load(open("config/datagen_config.yaml"))["seq_len"]  # Set to None for random length
+ENCODING_METHOD = yaml.safe_load(open("config/datagen_config.yaml"))["encoding_method"]
+OUTPUT_BASE_DIR = yaml.safe_load(open("config/datagen_config.yaml"))["data_output_dir"]
 OUTPUT_PATH = f'{OUTPUT_BASE_DIR}/mts_shape_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.jsonl'
 EVOL_LABEL_PATH = f'{OUTPUT_BASE_DIR}/evol_labels/mts_shape_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.json'
 CLUSTER_LABEL_PATH = f'{OUTPUT_BASE_DIR}/labels/mts_shape_llm_{SEQ_LEN}_{NUM_DATA}_{ENCODING_METHOD}.json'
-DISABLE_METRIC_CONFIG = False
-DRYRUN = False
+DISABLE_METRIC_CONFIG = yaml.safe_load(open("config/datagen_config.yaml"))["disable_metric_config"]
+DRYRUN = yaml.safe_load(open("config/datagen_config.yaml"))["dryrun"]
 
 
 # All Config for TS Features
@@ -374,6 +375,8 @@ def generate_dataset():
                 break
 
     # Use LLM to generate answer
+    print(f'Generated {len(result)} data items, with {len(prompts)} prompts. {all_prompt_idx=}')
+
     if DRYRUN:
         llm_answers = ['This is a test answer.'] * len(prompts)
     else:

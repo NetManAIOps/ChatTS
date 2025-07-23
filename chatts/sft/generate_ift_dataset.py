@@ -14,22 +14,24 @@
 
 import numpy as np
 import json
+import yaml
 import os
 import random
-from chatts.encoding_utils import timeseries_encoding, timeseries_to_list
+from chatts.utils.encoding_utils import timeseries_encoding, timeseries_to_list
 from tqdm import tqdm
 import copy
 import traceback
 
 # Config
-ENCODING_METHOD = 'sp'
+ENCODING_METHOD = yaml.safe_load(open("config/datagen_config.yaml"))['encoding_method']
+OUTPUT_BASE_DIR = yaml.safe_load(open("config/datagen_config.yaml"))['data_output_dir']
 TARGET_CNT = 10000
-OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
-OUTPUT_PATH = f'{OUTPUT_BASE_DIR}/ift_256_{ENCODING_METHOD}.jsonl'
+SEQ_LEN = yaml.safe_load(open("config/datagen_config.yaml"))['seq_len']
+OUTPUT_PATH = f'{OUTPUT_BASE_DIR}/ift_{SEQ_LEN}_{ENCODING_METHOD}.jsonl'
 LABEL_FILES = [
-    f'{OUTPUT_BASE_DIR}/labels/mts_local_llm_256_15000_{ENCODING_METHOD}.json',
-    f'{OUTPUT_BASE_DIR}/labels/mts_shape_llm_256_15000_{ENCODING_METHOD}.json',
-    f'{OUTPUT_BASE_DIR}/labels/uts_llm_256_15000_{ENCODING_METHOD}.json'
+    f'{OUTPUT_BASE_DIR}/labels/mts_local_llm_{SEQ_LEN}_15000_{ENCODING_METHOD}.json',
+    f'{OUTPUT_BASE_DIR}/labels/mts_shape_llm_{SEQ_LEN}_15000_{ENCODING_METHOD}.json',
+    f'{OUTPUT_BASE_DIR}/labels/uts_llm_{SEQ_LEN}_15000_{ENCODING_METHOD}.json'
 ]
 ALL_LOCAL_TYPES = {'increase after downward spike', 'increase after upward spike', 'upward spike', 'rapid decline followed by slow rise', 'slow rise followed by rapid decline', 'continuous upward spike', 'wide downward spike', 'slow decline followed by rapid rise', 'upward convex', 'shake', 'rapid rise followed by slow decline', 'sudden increase', 'downward spike', 'sudden decrease', 'continuous downward spike', 'decrease after upward spike', 'wide upward spike', 'decrease after downward spike', 'downward convex'}
 
@@ -54,7 +56,7 @@ def generate_season(sample):
     if 'no' in sample['label']['seasonal']['type']:
         answer = "no periodic fluctuation"
     else:
-        answer = f"periodic fluctuation, each period is around {sample['label']['frequency']['period']:.2f} points, and the amplitude of the periodic fluctuation is around {sample['label']['seasonal']['amplitude']:.2f}."
+        answer = f"periodic fluctuation, each period is around {sample['label']['frequency']['period']:.2f} points, and the amplitude of the periodic fluctuation is around {sample['label']['seasonal']['segments'][0]['amplitude']:.2f}."
     return question, answer
 
 def generate_season_llm(sample):
@@ -62,7 +64,7 @@ def generate_season_llm(sample):
     if 'no' in sample['label']['seasonal']['type']:
         answer = f'no periodic fluctuation. It indicates that {sample["label"]["seasonal"]["detail"]}'
     else:
-        answer = f"periodic fluctuation, each period is around {sample['label']['frequency']['period']:.2f} points, and the amplitude of the periodic fluctuation is around {sample['label']['seasonal']['amplitude']:.2f}. It indicates that {sample['label']['seasonal']['detail']}"
+        answer = f"periodic fluctuation, each period is around {sample['label']['frequency']['period']:.2f} points, and the amplitude of the periodic fluctuation is around {sample['label']['seasonal']['segments'][0]['amplitude']:.2f}. It indicates that {sample['label']['seasonal']['detail']}"
     return question, answer
 
 def generate_noise(sample):

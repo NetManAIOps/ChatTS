@@ -14,30 +14,30 @@
 """
     This script is used to generate the stage-2 training data with LLMs for univariate time series, which can be further used as seed QAs for TSEvol.
     Usage:
-        python3 -m chatts.generate_llm_qa
+        python3 -m chatts.sft.generate_llm_qa
 """
 
 import numpy as np
 import random
 from tqdm import tqdm
 import json
+import yaml
 from typing import *
 from chatts.ts_generator.generate import generate_time_series, generate_controlled_attributes, attribute_to_text
-from chatts.llm_utils import llm_batch_generate, parse_llm_json
-from chatts.encoding_utils import timeseries_encoding, timeseries_to_list
-from chatts.attribute_utils import metric_to_controlled_attributes
+from chatts.utils.llm_utils import llm_batch_generate, parse_llm_json
+from chatts.utils.encoding_utils import timeseries_encoding, timeseries_to_list
+from chatts.utils.attribute_utils import metric_to_controlled_attributes
 import os
 
 
 # CONFIG
 TOTAL_CNT = 1000
-SEQ_LEN = 256  # Set to None to enable random sequence length selection
-ENCODING_METHOD = 'sp'
-OUTPUT_BASE_DIR = json.load(open("config/datagen_config.json"))["data_output_dir"]
+SEQ_LEN = yaml.safe_load(open("config/datagen_config.yaml"))['seq_len']  # Set to None to enable random sequence length selection
+ENCODING_METHOD = yaml.safe_load(open("config/datagen_config.yaml"))['encoding_method']
+OUTPUT_BASE_DIR = yaml.safe_load(open("config/datagen_config.yaml"))['data_output_dir']
 OUTPUT_DATASET = f'{OUTPUT_BASE_DIR}/llm_qa_{TOTAL_CNT}_{ENCODING_METHOD}.jsonl'
 OUTPUT_LABEL = f'{OUTPUT_BASE_DIR}/evol_labels/llm_qa_{TOTAL_CNT}_{ENCODING_METHOD}.json'
-DRYRUN = False
-
+DRYRUN = yaml.safe_load(open("config/datagen_config.yaml"))['dryrun']
 
 # All Config for TS Attributes (type & probability)
 metric_config = json.load(open('config/metric_set.json', 'rt'))

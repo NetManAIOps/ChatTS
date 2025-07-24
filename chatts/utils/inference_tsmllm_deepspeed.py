@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor
 import torch
 import os
 import deepspeed
@@ -20,7 +20,6 @@ from transformers.integrations import HfDeepSpeedConfig
 import json
 from loguru import logger
 import numpy as np
-from chatts.utils.encoding_utils import timeseries_encoding
 
 
 # CONFIG
@@ -57,6 +56,7 @@ ds_config = {
 dscfg = HfDeepSpeedConfig(ds_config)
 tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH, trust_remote_code=True)
 model = AutoModelForCausalLM.from_pretrained(MODEL_PATH, trust_remote_code=True)
+processor = AutoProcessor.from_pretrained(MODEL_PATH, trust_remote_code=True, tokenizer=tokenizer)
 ds_engine = deepspeed.initialize(model=model, config=ds_config)[0]
 model_engine = ds_engine.module
 model_engine.eval()
@@ -77,7 +77,7 @@ def answer_question_list(question_list, ts_list, batch_size=BATCH_SIZE):
             if ts_list[i] is None:
                 continue
             for ts in ts_list[i]:
-                batch_ts_list.append(np.array([ts]))
+                batch_ts_list.append(np.array(ts))
         ts_num_tokens = []
         for i in batch_indices:
             if ts_list[i] is None:
@@ -85,29 +85,17 @@ def answer_question_list(question_list, ts_list, batch_size=BATCH_SIZE):
             else:
                 ts_num_tokens.append(sum([len(t) for t in ts_list[i]]) // model.config.ts['patch_size'])
 
-        print(f"[worker {local_rank}] {batch_question_list=}")
-        inputs = tokenizer(batch_question_list, return_tensors="pt", padding=True, truncation=True).to(device=local_rank)
+        print(f"[worker {local_rank}] {len(batch_ts_list)=}, {batch_ts_list[0].shape=}, {batch_question_list=}")
+        inputs = processor(text=batch_question_list, timeseries=batch_ts_list, padding=True, return_tensors="pt")
+        inputs = {k: v.to(device=local_rank) for k, v in inputs.items()}
         
-        if len(batch_ts_list) > 0:
-            max_length = max(arr.shape[1] for arr in batch_ts_list)
-            padded_time_series_attributes = [
-                np.pad(arr, ((0, 0), (0, max_length - arr.shape[1]), (0, 0)), mode='constant', constant_values=0)
-                for arr in batch_ts_list
-            ]
-            concatenated_time_series = np.concatenate(padded_time_series_attributes, axis=0)
-            ts_tensors = torch.tensor(concatenated_time_series, dtype=torch.float16, device=local_rank)
-            print(f"[worker {local_rank}] {ts_tensors.shape=}")
-        else:
-            ts_tensors = None
         print(f"[worker {local_rank}] {inputs['input_ids'].shape=}, {inputs['attention_mask'].shape=}")
 
         with torch.no_grad():
             outputs = model_engine.generate(
-                inputs['input_ids'], 
-                attention_mask=inputs['attention_mask'], 
-                timeseries=ts_tensors, 
+                **inputs,
                 synced_gpus=False, 
-                max_length=inputs['input_ids'].shape[-1] + 512,
+                max_length=inputs['input_ids'].shape[-1] + 1024,
                 temperature=0.2
             )
 
@@ -141,14 +129,7 @@ if __name__ == '__main__':
     ts_list = []
     for idx in range(len(dataset)):
         sample = dataset[idx]
-
-        # Scaler
-        prompt_list = sample['question'].split('<ts><ts/>')
-        prompt = prompt_list[0]
-        for ts in range(len(sample['timeseries'])):
-            scaled_timeseries, cur_ts_prompt, _ = timeseries_encoding(sample['timeseries'][ts], ENCODING_METHOD)
-            sample['timeseries'][ts] = scaled_timeseries
-            prompt += cur_ts_prompt + prompt_list[ts + 1]
+        prompt = sample['question']
         prompt = f"<|im_start|>system\nYou are a helpful assistant.<|im_end|><|im_start|>user\n{prompt}<|im_end|><|im_start|>assistant\n"
 
         question_list.append(prompt)

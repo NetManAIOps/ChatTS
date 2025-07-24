@@ -16,22 +16,27 @@
 from evaluation.ragas.metric import AnswerCorrectness
 from evaluation.ragas.config import load_llm, load_embeddings, config
 from ragas import RunConfig
+from loguru import logger
 import copy
 
 def calculate_ragas_score(question: str, response: str, label: str):
-    answer_correctness = AnswerCorrectness(
-        embeddings=load_embeddings(),
-        llm=load_llm(),
-        weights=[1.0, 0.0]
-    )
-    answer_correctness.answer_detail = {}
+    try:
+        answer_correctness = AnswerCorrectness(
+            embeddings=load_embeddings(),
+            llm=load_llm(),
+            weights=[1.0, 0.0]
+        )
+        answer_correctness.answer_detail = {}
 
-    score = answer_correctness.score(
-        row={
-            'question': question,
-            'answer': response,
-            'ground_truth': label
-        }
-    )
+        score = answer_correctness.score(
+            row={
+                'question': question,
+                'answer': response,
+                'ground_truth': label
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error calculating RAGAS score: {e}. Please make sure that you have set the correct API key!")
+        return 0.0, {}
 
     return float(score), copy.deepcopy(answer_correctness.answer_detail)

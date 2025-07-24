@@ -15,7 +15,7 @@
 This repo provides code, datasets and model for `ChatTS` (VLDB' 25): [ChatTS: Aligning Time Series with LLMs via Synthetic Data for Enhanced Understanding and Reasoning](https://arxiv.org/pdf/2412.03104).
 
 ## Web Demo
-The Web Demo of ChatTS-14B is available at HuggingFace Spaces: [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20ChatTS-Web%20Demo-blue)](https://huggingface.co/spaces/xiezhe22/ChatTS)
+The Web Demo of ChatTS-14B is available at HuggingFace Spaces: [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20ChatTS-Web%20Demo-blue)](https://huggingface.co/spaces/xiezhe22/ChatTS). You can upload a `.csv` file to the Web Demo to analyze your own data. Example: [ts_example.csv](demo/ts_example.csv)
 
 ## Key Features
 ChatTS is a Multimodal LLM built natively for time series as a core modality：

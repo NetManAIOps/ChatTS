@@ -3,7 +3,7 @@
 # ChatTS: Understanding, Chat, Reasoning about Time Series with TS-MLLM
 
 [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-FFD21E)](https://huggingface.co/bytedance-research/ChatTS-14B)
-[![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Datasets-FFD21E)](https://huggingface.co/datasets/ChatTSRepo/ChatTS-Training-Dataset)
+[![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20ChatTS-Web%20Demo-blue)](https://huggingface.co/spaces/xiezhe22/ChatTS)
 [![DOI](https://zenodo.org/badge/DOI/Datasets.svg)](https://doi.org/10.5281/zenodo.14349206)
 [![preprint](https://img.shields.io/static/v1?label=arXiv&message=2412.03104&color=B31B1B&logo=arXiv)](https://arxiv.org/abs/2412.03104)
 ![Stars](https://img.shields.io/github/stars/NetManAIOps/ChatTS)
@@ -13,6 +13,9 @@
 
 `ChatTS` is a Time Series Multimodal LLM focuses on **Understanding and Reasoning** about time series, much like what vision/video/audio-MLLMs do.
 This repo provides code, datasets and model for `ChatTS` (VLDB' 25): [ChatTS: Aligning Time Series with LLMs via Synthetic Data for Enhanced Understanding and Reasoning](https://arxiv.org/pdf/2412.03104).
+
+## Web Demo
+The Web Demo of ChatTS-14B is available at HuggingFace Spaces: [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20ChatTS-Web%20Demo-blue)](https://huggingface.co/spaces/xiezhe22/ChatTS)
 
 ## Key Features
 ChatTS is a Multimodal LLM built natively for time series as a core modality：
@@ -51,7 +54,8 @@ A fine-tuned `ChatTS` model (based on a modified version of QWen2.5-14B-Instruct
   - [Step 2: Evaluate the Models](#evaluation)
 
 ## News
-- **2025/07/03**: `ChatTS-14B-GPTQ-4bit` is available at [HuggingFace](https://huggingface.co/xiezhe24/ChatTS-14B-GPTQ-Int4)!
+- **2025/07/24**: A Web Demo of ChatTS is available at [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20ChatTS-Web%20Demo-blue)](https://huggingface.co/spaces/xiezhe22/ChatTS)
+- **2025/07/03**: The quantized version of ChatTS: `ChatTS-14B-GPTQ-4bit` is available at [HuggingFace](https://huggingface.co/xiezhe24/ChatTS-14B-GPTQ-Int4)!
 - **2025/04/29**: The data generation code has been updated. You can generate the training datasets of `ChatTS` with the updated code now. Please refer to [Training Data Generation](#training-data-generation). We have also open-sourced the implementation for all the baseline models! Please refer to [Evaluation](#evaluation).
 - **2025/04/16**: ChatTS has been accepted by VLDB '25! We have released the training datasets for ChatTS. You can also use the code in this repo to generate data manually and do the model training.
 - **2025/01/01**: We have released a new version of `ChatTS` model, with enhanced CoT and question answering capability. Check [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-FFD21E)](https://huggingface.co/bytedance-research/ChatTS-14B) for more information.

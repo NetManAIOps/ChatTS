@@ -26,7 +26,7 @@ import os
 
 
 # CONFIG
-NUM_DATA = 20000
+NUM_DATA = yaml.safe_load(open("config/datagen_config.yaml"))["num_data_template_qa"]
 SEQ_LEN = yaml.safe_load(open("config/datagen_config.yaml"))["seq_len"]  # Set to None for random length
 ENCODING_METHOD = yaml.safe_load(open("config/datagen_config.yaml"))["encoding_method"]
 OUTPUT_BASE_DIR = yaml.safe_load(open("config/datagen_config.yaml"))["data_output_dir"]

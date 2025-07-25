@@ -25,13 +25,14 @@ import traceback
 # Config
 ENCODING_METHOD = yaml.safe_load(open("config/datagen_config.yaml"))['encoding_method']
 OUTPUT_BASE_DIR = yaml.safe_load(open("config/datagen_config.yaml"))['data_output_dir']
-TARGET_CNT = 10000
+TARGET_CNT = yaml.safe_load(open("config/datagen_config.yaml"))["num_data_ift"]
 SEQ_LEN = yaml.safe_load(open("config/datagen_config.yaml"))['seq_len']
 OUTPUT_PATH = f'{OUTPUT_BASE_DIR}/ift_{SEQ_LEN}_{ENCODING_METHOD}.jsonl'
+NUM_DATA_LLM = yaml.safe_load(open("config/datagen_config.yaml"))["num_data_llm_qa"]
 LABEL_FILES = [
-    f'{OUTPUT_BASE_DIR}/labels/mts_local_llm_{SEQ_LEN}_15000_{ENCODING_METHOD}.json',
-    f'{OUTPUT_BASE_DIR}/labels/mts_shape_llm_{SEQ_LEN}_15000_{ENCODING_METHOD}.json',
-    f'{OUTPUT_BASE_DIR}/labels/uts_llm_{SEQ_LEN}_15000_{ENCODING_METHOD}.json'
+    f'{OUTPUT_BASE_DIR}/labels/mts_local_llm_{SEQ_LEN}_{NUM_DATA_LLM}_{ENCODING_METHOD}.json',
+    f'{OUTPUT_BASE_DIR}/labels/mts_shape_llm_{SEQ_LEN}_{NUM_DATA_LLM}_{ENCODING_METHOD}.json',
+    f'{OUTPUT_BASE_DIR}/labels/uts_llm_{SEQ_LEN}_{NUM_DATA_LLM}_{ENCODING_METHOD}.json'
 ]
 ALL_LOCAL_TYPES = {'increase after downward spike', 'increase after upward spike', 'upward spike', 'rapid decline followed by slow rise', 'slow rise followed by rapid decline', 'continuous upward spike', 'wide downward spike', 'slow decline followed by rapid rise', 'upward convex', 'shake', 'rapid rise followed by slow decline', 'sudden increase', 'downward spike', 'sudden decrease', 'continuous downward spike', 'decrease after upward spike', 'wide upward spike', 'decrease after downward spike', 'downward convex'}
 

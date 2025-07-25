@@ -24,20 +24,21 @@ import json
 import yaml
 from typing import *
 from chatts.ts_generator.generate import generate_time_series, generate_controlled_attributes, attribute_to_text
-from chatts.utils.llm_utils import llm_batch_generate, parse_llm_json
+from chatts.utils.llm_utils import LLMClient, parse_llm_json
 from chatts.utils.encoding_utils import timeseries_encoding, timeseries_to_list
 from chatts.utils.attribute_utils import metric_to_controlled_attributes
 import os
 
 
 # CONFIG
-TOTAL_CNT = 1000
+TOTAL_CNT = yaml.safe_load(open("config/datagen_config.yaml"))['num_data_llm_qa']
 SEQ_LEN = yaml.safe_load(open("config/datagen_config.yaml"))['seq_len']  # Set to None to enable random sequence length selection
 ENCODING_METHOD = yaml.safe_load(open("config/datagen_config.yaml"))['encoding_method']
 OUTPUT_BASE_DIR = yaml.safe_load(open("config/datagen_config.yaml"))['data_output_dir']
 OUTPUT_DATASET = f'{OUTPUT_BASE_DIR}/llm_qa_{TOTAL_CNT}_{ENCODING_METHOD}.jsonl'
 OUTPUT_LABEL = f'{OUTPUT_BASE_DIR}/evol_labels/llm_qa_{TOTAL_CNT}_{ENCODING_METHOD}.json'
 DRYRUN = yaml.safe_load(open("config/datagen_config.yaml"))['dryrun']
+LOCAL_LLM_PATH = yaml.safe_load(open("config/datagen_config.yaml"))['local_llm_path']
 
 # All Config for TS Attributes (type & probability)
 metric_config = json.load(open('config/metric_set.json', 'rt'))
@@ -166,7 +167,9 @@ def generate_dataset():
     if DRYRUN:
         llm_answers = ['[{"question": "This is a test question.", "answer": "This is a test answer."}]'] * len(prompts)
     else:
-        llm_answers = llm_batch_generate(prompts, use_chat_template=True)
+        llm_client = LLMClient(model_path=LOCAL_LLM_PATH, engine='vllm')
+        llm_answers = llm_client.llm_batch_generate(prompts, use_chat_template=True)
+        llm_client.kill()
 
     # Parse json
     dataset = []

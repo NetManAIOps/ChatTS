@@ -16,6 +16,12 @@ encoding_method: "sp"
 # Sequence length of the generated time series (set to null for random length) (default: 256)
 seq_len: 256
 
+# Num of data to generate
+num_data_template_qa: 20000
+num_data_llm_qa: 20000
+num_data_ift: 10000
+num_data_tsevol: 1000
+
 # Whether to disable extreme lengths (<64, >1024) (default: false)
 disable_extreme_lengths: false
 
@@ -32,4 +38,4 @@ enable_multiple_seasonal: false
 enable_multiple_noise: false
 
 # Set to true for debug usage only (default: false)
-dryrun: true
+dryrun: false

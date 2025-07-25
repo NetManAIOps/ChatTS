@@ -49,13 +49,14 @@ batch_size = 32
 ENGINE = 'vllm'
 MULTIPROCESS = True
 DFS_K = 3
-TOTAL_CNT = 100
+TOTAL_CNT = yaml.safe_load(open("config/datagen_config.yaml"))["num_data_tsevol"]
+NUM_DATA_LLM = yaml.safe_load(open("config/datagen_config.yaml"))["num_data_llm_qa"]
 
 INPUT_FILES = [
-    (f'{DATA_OUTPUT_DIR}/llm_qa_1000_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_qa_1000_{ENCODING_METHOD}.json'),
-    (f'{DATA_OUTPUT_DIR}/mts_local_llm_{SEQ_LEN}_15000_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/mts_local_llm_{SEQ_LEN}_15000_{ENCODING_METHOD}.json'),
-    (f'{DATA_OUTPUT_DIR}/mts_shape_llm_{SEQ_LEN}_15000_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/mts_shape_llm_{SEQ_LEN}_15000_{ENCODING_METHOD}.json'),
-    (f'{DATA_OUTPUT_DIR}/uts_llm_{SEQ_LEN}_15000_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/uts_llm_{SEQ_LEN}_15000_{ENCODING_METHOD}.json')
+    (f'{DATA_OUTPUT_DIR}/llm_qa_{NUM_DATA_LLM}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_qa_{NUM_DATA_LLM}_{ENCODING_METHOD}.json'),
+    (f'{DATA_OUTPUT_DIR}/mts_local_llm_{SEQ_LEN}_{NUM_DATA_LLM}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/mts_local_llm_{SEQ_LEN}_{NUM_DATA_LLM}_{ENCODING_METHOD}.json'),
+    (f'{DATA_OUTPUT_DIR}/mts_shape_llm_{SEQ_LEN}_{NUM_DATA_LLM}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/mts_shape_llm_{SEQ_LEN}_{NUM_DATA_LLM}_{ENCODING_METHOD}.json'),
+    (f'{DATA_OUTPUT_DIR}/uts_llm_{SEQ_LEN}_{NUM_DATA_LLM}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/uts_llm_{SEQ_LEN}_{NUM_DATA_LLM}_{ENCODING_METHOD}.json')
 ]
 OUTPUT_FILE = f'{DATA_OUTPUT_DIR}/evol_{TOTAL_CNT}_{ENCODING_METHOD}.jsonl'
 

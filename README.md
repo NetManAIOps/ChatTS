@@ -15,7 +15,9 @@
 This repo provides code, datasets and model for `ChatTS` (VLDB' 25): [ChatTS: Aligning Time Series with LLMs via Synthetic Data for Enhanced Understanding and Reasoning](https://arxiv.org/pdf/2412.03104).
 
 ## Web Demo
-The Web Demo of ChatTS-14B is available at HuggingFace Spaces: [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20ChatTS-Web%20Demo-blue)](https://huggingface.co/spaces/xiezhe22/ChatTS). You can upload a `.csv` file to the Web Demo to analyze your own data. Example: [ts_example.csv](demo/ts_example.csv)
+The **Web Demo** of ChatTS-14B is available at [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20ChatTS-Web%20Demo-blue)](https://huggingface.co/spaces/xiezhe22/ChatTS)
+
+You can upload a `.csv` file to the Web Demo to analyze your own data (Example: [ts_example.csv](demo/ts_example.csv))
 
 ## Key Features
 ChatTS is a Multimodal LLM built natively for time series as a core modality：
@@ -38,6 +40,8 @@ Check out the [Case Studies](#case-studies) section for more real-world applicat
 A fine-tuned `ChatTS` model (based on a modified version of QWen2.5-14B-Instruct) have been open-sourced at [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-FFD21E)](https://huggingface.co/bytedance-research/ChatTS-14B). You can download and try it! -->
 
 ## Quick Start
+- **Web Demo (New)**:
+  - [(No Need to Install) Try ChatTS with the Web Demo on Huggingface Spaces](https://huggingface.co/spaces/xiezhe22/ChatTS)
 - **Installation:**
   - [Step 1: Download the ChatTS-14B Model, Training and Evaluation Datasets](#resource-links)
   - [Step 2: Install the dependencies](#installation)
@@ -50,8 +54,8 @@ A fine-tuned `ChatTS` model (based on a modified version of QWen2.5-14B-Instruct
   - [Step 2: Fine-tuning Your own Models](#fine-tuning-your-own-model)
   - [Optional: Use the TS Generator Manually](#ts-generator) (refer to [demo/demo_ts_generator.py](demo/demo_ts_generator.ipynb))
 - **Evaluation:**
-  - [Step 1: Generate Answers with DeepSpeed](#deepspeed-model-inference-for-evaluation)
-  - [Step 2: Evaluate the Models](#evaluation)
+  - [Step 1: Generate Answers with vLLM / DeepSpeed](#step-1-vllm--deepspeed-model-inference-for-evaluation)
+  - [Step 2: Evaluate the Results](#step-2-evaluate-the-results)
 
 ## News
 - **2025/07/24**: A Web Demo of ChatTS is available at [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20ChatTS-Web%20Demo-blue)](https://huggingface.co/spaces/xiezhe22/ChatTS)
@@ -162,16 +166,24 @@ outputs = language_model.generate([{
 #### Notes
 - `SEQ_LEN` of generated time series can be configured by setting the `SEQ_LEN` parameter in `config/datagen_config.yaml`. In ChatTS, most of the time series are with length of 256 in the training and evaluation datasets. We also mix time series with other lengths during training (by setting `seq_len=null`) for ChatTS to adapt to time series with different lengths.
 
-### Deepspeed Model Inference for Evaluation
+### Evaluation
+#### Step 1: vLLM / DeepSpeed Model Inference for Evaluation
 - Download the evaluation datasets and the ChatTS-14B checkpoints first (refer to [Installation](#installation)).
-- We provide a simple script for inference of ChatTS (`chatts/utils/inference_tsmllm_deepspeed.py`) with `deepspeed`. After installing `deepspeed`, please set the correct path to your evaluation dataset and the ChatTS model in the script. Then, run the following command to do the model inference:
-```sh
-deepspeed --num_gpus [YOUR_NUM_GPUS] --master_port 12345 chatts/utils/inference_tsmllm_deepspeed.py
-```
+- **Option 1: vLLM Inference (Experimental).**
+  After installing `vllm==0.8.5`, please set the correct path to your evaluation dataset and the ChatTS model, and the number of GPUs in the `chatts/utils/inference_tsmllm_vllm.py`. Then, run the following command to do the model inference:
+  ```sh
+  python3 -m chatts.utils.inference_tsmllm_vllm.py
+  ```
+
+- **Option 2: DeepSpeed Inference (Slower).**
+  We provide a simple script for inference of ChatTS (`chatts/utils/inference_tsmllm_deepspeed.py`) with `deepspeed`. After installing `deepspeed`, please set the correct path to your evaluation dataset and the ChatTS model in the script. Then, run the following command to do the model inference:
+  ```sh
+  deepspeed --num_gpus [YOUR_NUM_GPUS] --master_port 12345 chatts/utils/inference_tsmllm_deepspeed.py
+  ```
 You should find the inference results under `exp/` folder, which will be further used for evaluation.
 
-### Evaluation
-- Generate the inference results of `ChatTS` by following the steps in [Deepspeed Model Inference for Evaluation](#deepspeed-model-inference-for-evaluation).
+#### Step 2: Evaluate the Results
+- Generate the inference results of `ChatTS` by following the steps in [Deepspeed Model Inference for Evaluation](#step-1-vllm--deepspeed-model-inference-for-evaluation).
 - Install `ragas==0.1.9` (https://github.com/explodinggradients/ragas), which is used for evaluating the inductive reasoning results.
 - Set the `API_KEY` and `OPENAI_URL` in `evaluation/ragas/config/config.toml` (Refer to https://platform.openai.com/docs/api-reference).
 - Run `python3 -m evaluation.evaluate_tsmllm_models` to evaluate `ChatTS` (make sure you have done the model inference before).

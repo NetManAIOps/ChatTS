@@ -172,7 +172,7 @@ outputs = language_model.generate([{
 - **Option 1: vLLM Inference (Experimental).**
   After installing `vllm==0.8.5`, please set the correct path to your evaluation dataset and the ChatTS model, and the number of GPUs in the `chatts/utils/inference_tsmllm_vllm.py`. Then, run the following command to do the model inference:
   ```sh
-  python3 -m chatts.utils.inference_tsmllm_vllm.py
+  python3 -m chatts.utils.inference_tsmllm_vllm
   ```
 
 - **Option 2: DeepSpeed Inference (Slower).**

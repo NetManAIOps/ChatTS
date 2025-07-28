@@ -34,7 +34,7 @@ EXP = 'chatts_dataset_a'
 MODEL_PATH = os.path.abspath('ckpt')
 DATASET = f'./evaluation/dataset/dataset_a.json'
 WORKDIR = os.path.abspath('./')
-NUM_GPUS = 4
+NUM_GPUS = 8
 MAX_MM_PER_PROMPT = 50  # Maximum number of time series per prompt
 
 
@@ -46,8 +46,8 @@ sampling_params = SamplingParams(
 
 def answer_question_list(question_list, ts_list):
     answer_dict = {}
-    
     llm_client = LLMClient(model_path=MODEL_PATH, engine='vllm-ts', num_gpus=NUM_GPUS)
+    llm_client.wait_for_ready()
     answer_list = llm_client.llm_batch_generate(question_list, ts_list, sampling_params=sampling_params)
     llm_client.kill()
 

@@ -18,7 +18,7 @@ seq_len: 256
 
 # Num of data to generate
 num_data_template_qa: 20000
-num_data_llm_qa: 20000
+num_data_llm_qa: 15000
 num_data_ift: 10000
 num_data_tsevol: 1000
 

@@ -353,27 +353,3 @@ def match_metric_name(metric: str, sentence: str) -> bool:
     metric = re.sub(pattern, '', metric).lower()
 
     return metric in sentence
-
-
-if __name__ == '__main__':
-    # Load questions
-    # Load Time Series Data
-    SEQ_LEN_1 = 256
-    SEQ_LEN_2 = 1000
-
-    x1 = np.arange(SEQ_LEN_1)
-    x2 = np.arange(SEQ_LEN_2)
-
-    # TS1: A simple sin signal with a sudden decrease
-    ts1 = np.sin(x1 / 10) * 5.0
-    ts1[103:] -= 10.0
-
-    # TS2: A increasing trend with a upward spike
-    ts2 = x2 * 0.01
-    ts2[100] += 10.0
-    prompt = f"I have 2 time series. TS1 is of length {SEQ_LEN_1}: <ts><ts/>; TS2 if of length {SEQ_LEN_2}: <ts><ts/>. Please analyze the local changes in these time series and analyze if they are correlated in terms of their change positions."
-    client = LLMClient(model_path="/mnt/bn/mllmhl/sft_checkpoints/qwen2.5-14b-ts-explaints-1223-sp-kv", engine='vllm-ts', num_gpus=4, gpus_per_model=1, batch_size=32, sample_n=3)
-
-    batch_answers = client.llm_batch_generate([prompt] * 100, [[ts1, ts2]] * 100)
-    print(batch_answers)
-    client.kill()

@@ -1,6 +1,7 @@
 *.DS_Store
 *__pycache__
 evaluation/dataset/*
+config/datagen_config_bak.yaml
 !evaluation/dataset/.gitkeep
 result/
 labels/

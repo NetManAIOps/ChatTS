@@ -49,17 +49,29 @@ from vllm import ModelRegistry
 
 # === TimeSeriesEmbedding ===
 class TimeSeriesEmbedding(nn.Module):
-
     def __init__(self, config):
-        super().__init__()
+        super(TimeSeriesEmbedding, self).__init__()
         self.patch_size = config['patch_size']
         self.num_layers = config['num_layers']
         self.hidden_size = config['hidden_size']
         self.num_features = config['num_features']
-
+        self.max_sequence_length = config.get('max_sequence_length', config['max_length'])  # Maximum time series length
+        self.use_position_embedding = config.get('use_position_embedding', False)
+        self.use_position_idx = config.get('use_position_idx', False)
+        self.embedding_dim = config.get('embedding_dim', 16)  # Embedding dimension
+        
+        if self.use_position_embedding:
+            # Extended vocabulary: [0, max_sequence_length) for real positions, max_sequence_length for padding
+            self.position_embedding = nn.Embedding(self.max_sequence_length + 1, self.embedding_dim)
+            self.padding_idx = self.max_sequence_length  # Special index for padding
+            input_size = 1 * self.patch_size + self.embedding_dim * self.patch_size
+        elif self.use_position_idx:
+            input_size = 2 * self.patch_size
+        else:
+            input_size = 1 * self.patch_size
+        
+        # Build MLP layers
         layers = []
-        input_size = 1 * self.patch_size
-
         for _ in range(self.num_layers - 1):
             layers.append(nn.Linear(input_size, self.hidden_size))
             layers.append(nn.GELU())
@@ -72,36 +84,103 @@ class TimeSeriesEmbedding(nn.Module):
         batch_size = x.size(0)
         x = x.reshape(batch_size, -1, self.num_features)
 
-        mask = x[:, :, -1]
-        valid_lengths = mask.sum(dim=1).long()  # Shape: (batch_size)
-
-        patch_cnt = (valid_lengths + self.patch_size -
-                     1) // self.patch_size  # 向上取整
+        # Extract mask and calculate valid lengths
+        mask = x[:, :, -1].long()
+        valid_lengths = mask.sum(dim=1).long()
+        patch_cnt = (valid_lengths + self.patch_size - 1) // self.patch_size
 
         patches_list = []
+        # Collect position indices for batch embedding lookup
+        all_position_indices = []
+        patch_info_list = []  # Store metadata for each patch group
+        
         for i in range(batch_size):
             vl = valid_lengths[i].item()
             pc = patch_cnt[i].item()
             if pc == 0:
                 continue
-            xi = x[i, :vl, :1]
+            
+            # Extract time series data (excluding mask)
+            xi = x[i, :vl, :1]  # Time-series data
             total_padded_length = pc * self.patch_size
             padding_length = total_padded_length - vl
+            
+            # Create position indices: real positions for actual data, special index for padding
+            position_indices = torch.arange(vl, device=x.device)
+            
             if padding_length > 0:
-                padding = torch.zeros(padding_length,
-                                      1,
-                                      device=x.device,
-                                      dtype=x.dtype)
+                # Pad with last value
+                if self.use_position_embedding:
+                    last_value = xi[-1:, :]
+                    padding = last_value.repeat(padding_length, 1)
+                else:
+                    padding = torch.zeros((padding_length, 1), device=x.device)
                 xi = torch.cat([xi, padding], dim=0)
-            xi = xi.reshape(pc, self.patch_size * 1)
-            patches_list.append(xi)
+                
+                # Use special padding index for padding positions
+                padding_positions = torch.full((padding_length,), self.padding_idx, device=x.device)
+                position_indices = torch.cat([position_indices, padding_positions], dim=0)
 
+            # Reshape to patches
+            xi = xi.reshape(pc, self.patch_size)  # (num_patches, patch_size)
+            position_indices = position_indices.reshape(pc, self.patch_size)  # (num_patches, patch_size)
+
+            if self.use_position_embedding:
+                # Collect position indices instead of calling embedding immediately
+                all_position_indices.append(position_indices)
+                patch_info_list.append({
+                    'xi': xi,
+                    'pc': pc,
+                    'sample_idx': i
+                })
+            elif self.use_position_idx:
+                # Normalize position indices
+                pos_indices = torch.arange(vl, device=x.device).unsqueeze(1)
+                pos_indices = pos_indices / max(1, valid_lengths.max().item() - 1)
+                if padding_length > 0:
+                    # Use -1 for padding positions
+                    padding_indices = torch.full((padding_length, 1), -1, device=x.device)
+                    pos_indices = torch.cat([pos_indices, padding_indices], dim=0)
+                # Combine time series data with position indices
+                xi_combined = torch.cat([xi.reshape(-1, 1), pos_indices], dim=1)
+                patch_input = xi_combined.reshape(pc, self.patch_size * 2)
+                patches_list.append(patch_input)
+            else:
+                # No position embedding, use raw patches
+                patch_input = xi
+                patches_list.append(patch_input)
+
+        # Batch process position embeddings if needed
+        if self.use_position_embedding and all_position_indices:
+            # Concatenate all position indices for batch embedding lookup
+            batch_position_indices = torch.cat(all_position_indices, dim=0)
+            # print(f"{x.shape=}, {x.device=}, {len(all_position_indices)=}, {batch_position_indices=}")
+            batch_pos_emb = self.position_embedding(batch_position_indices)  # Single embedding call
+            
+            # Split embeddings back and create patch inputs
+            emb_start_idx = 0
+            for patch_info in patch_info_list:
+                xi = patch_info['xi']
+                pc = patch_info['pc']
+                
+                # Extract corresponding embeddings
+                pos_emb = batch_pos_emb[emb_start_idx:emb_start_idx + pc]
+                emb_start_idx += pc
+                
+                # Flatten and concatenate
+                xi = xi.unsqueeze(-1)  # (num_patches, patch_size, 1)
+                patch_input = torch.cat([
+                    xi.flatten(1),  # (num_patches, patch_size)
+                    pos_emb.flatten(1)  # (num_patches, patch_size * embedding_dim)
+                ], dim=1)
+                patches_list.append(patch_input)
+
+        # Process all patches through MLP
         if patches_list:
-            x_patches = torch.cat(
-                patches_list,
-                dim=0)  # Shape: (total_patch_cnt, patch_size * num_features)
+            x_patches = torch.cat(patches_list, dim=0)
             x = self.mlp(x_patches)
         else:
+            # Handle empty case
             x = torch.empty(0, self.hidden_size, device=x.device)
 
         return x, patch_cnt
@@ -374,9 +453,16 @@ class Qwen2TSForCausalLM(nn.Module, SupportsMultiModal, SupportsPP,
             return None
 
         # ChatTS processor returns a list of tuples
-        # (ts_tokens, encoded_ts_arrays)
-        encoded_ts_arrays = [ts[0][1] for ts in timeseries]
-        # ts_tokens, encoded_ts_arrays = zip(*timeseries)
+        
+        # timeseries (batch x (ts_tokens, num_ts x encoded_ts) or batch x num_ts x (ts_tokens, encoded_ts))
+        encoded_ts_arrays = []
+        for batch in timeseries:
+            if not isinstance(batch[0], list):
+                encoded_ts_arrays.append(batch[1])
+            else:
+                # flatten the ts first
+                for ts in batch:
+                    encoded_ts_arrays.append(ts[1])
 
         device = encoded_ts_arrays[0].device
 

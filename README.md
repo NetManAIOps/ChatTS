@@ -58,11 +58,13 @@ A fine-tuned `ChatTS` model (based on a modified version of QWen2.5-14B-Instruct
   - [Step 2: Evaluate the Results](#step-2-evaluate-the-results)
 
 ## News
-- **2025/07/24**: A Web Demo of ChatTS is available at [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20ChatTS-Web%20Demo-blue)](https://huggingface.co/spaces/xiezhe22/ChatTS)
+- **2025/08/01: We release a [new model (`ChatTS-14B-0801`)](https://huggingface.co/bytedance-research/ChatTS-14B) for better reasoning and Chinese QA ability:**
+  - This new model introduce some minor bug fixes and code changes. We add position_embedding to the TimeSeriesEmbedding for better representation of positions. We have also retrained the model and added more reasoning and Chinese entries in the training dataset for better reasoning and Chinese capabilities. If you want to reproduce the results in the paper, please download the [legacy model](https://huggingface.co/bytedance-research/ChatTS-14B/tree/fea24f221dd13ad310b68cc5470f575647b838c6)
+  - This new model has almost the same evaluation results in terms of categorical metrics and better results in terms of statistical and reasoning metrics
+  - We have also updated the code for data preprocessing in [ChatTS-Training](https://github.com/xiezhe-24/ChatTS-Training). If you want to generate the datasets by yourself, please use `no` encoding instead of `sp` encoding when generating the data.
+- **2025/07/24**: A Web Demo of ChatTS-14B-0801 is available at [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20ChatTS-Web%20Demo-blue)](https://huggingface.co/spaces/xiezhe22/ChatTS)
 - **2025/07/03**: The quantized version of ChatTS: `ChatTS-14B-GPTQ-4bit` is available at [HuggingFace](https://huggingface.co/xiezhe24/ChatTS-14B-GPTQ-Int4)!
-- **2025/04/29**: The data generation code has been updated. You can generate the training datasets of `ChatTS` with the updated code now. Please refer to [Training Data Generation](#training-data-generation). We have also open-sourced the implementation for all the baseline models! Please refer to [Evaluation](#evaluation).
 - **2025/04/16**: ChatTS has been accepted by VLDB '25! We have released the training datasets for ChatTS. You can also use the code in this repo to generate data manually and do the model training.
-- **2025/01/01**: We have released a new version of `ChatTS` model, with enhanced CoT and question answering capability. Check [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-FFD21E)](https://huggingface.co/bytedance-research/ChatTS-14B) for more information.
 - **2024/12/30**: A experimental version of `vLLM` support for ChatTS is available! Check [demo_vllm.py](demo/demo_vllm.py) for more information. (**Note**: This version is still under development and may not be stable.) We have also updated the ChatTS model implementation, which supports `kv_cache` and `AutoProcessor` now.
 
 ## Resource Links

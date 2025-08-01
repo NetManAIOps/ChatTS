@@ -10,8 +10,8 @@ data_output_dir: "data"
 
 
 # ===================================Optional Config========================================
-# Encoding Method: sp (proprocessing + encoding) / no (no proprocessing and encoding) (default: sp)
-encoding_method: "sp"
+# Encoding Method: sp (proprocessing + encoding) / no (no proprocessing and encoding) (default: no)
+encoding_method: "no"
 
 # Sequence length of the generated time series (set to null for random length) (default: 256)
 seq_len: 256

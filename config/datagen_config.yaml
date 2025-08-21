@@ -10,10 +10,11 @@ data_output_dir: "data"
 
 
 # ===================================Optional Config========================================
-# Encoding Method: sp (proprocessing + encoding) / no (no proprocessing and encoding) (default: no)
+# Encoding Method: no (no proprocessing and encoding, do not change this) (default: no)
 encoding_method: "no"
 
 # Sequence length of the generated time series (set to null for random length) (default: 256)
+# Note: In ChatTS, we should generate datasets with both 256 seq length and random seq lengths for adaptation to time series with different lengths.
 seq_len: 256
 
 # Num of data to generate

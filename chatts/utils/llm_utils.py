@@ -151,7 +151,7 @@ def worker_vllm_ts(input_queue, output_queue, gpu_id, batch_size, sample_n, fini
         from vllm import LLM, SamplingParams
         import chatts.vllm.chatts_vllm
         sampling_params = SamplingParams(temperature=0.5, top_p=0.95, max_tokens=CTX_LENGTH, stop_token_ids=[151643, 151645], stop=['<|endoftext|>', '<|im_end|>'], n=sample_n)
-        llm = LLM(model=model_path, trust_remote_code=True, max_model_len=CTX_LENGTH, tensor_parallel_size=len(gpu_id.split(',')), gpu_memory_utilization=0.95, limit_mm_per_prompt={"timeseries": 50})
+        llm = LLM(model=model_path, trust_remote_code=True, max_model_len=CTX_LENGTH, tensor_parallel_size=len(gpu_id.split(',')), gpu_memory_utilization=0.95, limit_mm_per_prompt={"timeseries": 50}, enable_prefix_caching=False)
         print(f"[worker {gpu_id}] Initialization finished.")
         ready_cnt.value = ready_cnt.value + 1
         

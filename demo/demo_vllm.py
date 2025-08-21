@@ -27,7 +27,16 @@ ctx_length = 6000
 
 
 # Load Model with vLLM
-language_model = LLM(model=MODEL_PATH, trust_remote_code=True, max_model_len=ctx_length, tensor_parallel_size=1, gpu_memory_utilization=0.95, limit_mm_per_prompt={"timeseries": 50})
+language_model = LLM(
+    model=MODEL_PATH,
+    trust_remote_code=True,
+    max_model_len=ctx_length,
+    tensor_parallel_size=1,
+    gpu_memory_utilization=0.95,
+    limit_mm_per_prompt={"timeseries": 50},
+    # Disable the prefix caching in v1, which may cause some issues.
+    enable_prefix_caching=False
+)
 
 # Load Time Series Data
 SEQ_LEN_1 = 256

@@ -79,10 +79,22 @@ class TimeSeriesEmbedding(nn.Module):
         layers.append(nn.Linear(input_size, self.hidden_size))
 
         self.mlp = nn.Sequential(*layers)
+        
+        # Cache the target dtype for efficient access
+        self._target_dtype = None
+
+    @property
+    def target_dtype(self):
+        if self._target_dtype is None:
+            self._target_dtype = self.mlp[0].weight.dtype
+        return self._target_dtype
 
     def forward(self, x: torch.Tensor):
         batch_size = x.size(0)
         x = x.reshape(batch_size, -1, self.num_features)
+        
+        # Ensure x has the same dtype as the model parameters
+        x = x.to(dtype=self.target_dtype)
 
         # Extract mask and calculate valid lengths
         mask = x[:, :, -1].long()
@@ -114,7 +126,8 @@ class TimeSeriesEmbedding(nn.Module):
                     last_value = xi[-1:, :]
                     padding = last_value.repeat(padding_length, 1)
                 else:
-                    padding = torch.zeros((padding_length, 1), device=x.device)
+                    # Ensure padding has the same dtype as target
+                    padding = torch.zeros((padding_length, 1), device=x.device, dtype=self.target_dtype)
                 xi = torch.cat([xi, padding], dim=0)
                 
                 # Use special padding index for padding positions
@@ -141,12 +154,20 @@ class TimeSeriesEmbedding(nn.Module):
                     # Use -1 for padding positions
                     padding_indices = torch.full((padding_length, 1), -1, device=x.device)
                     pos_indices = torch.cat([pos_indices, padding_indices], dim=0)
+                
+                # Ensure correct dtype
+                xi = xi.to(dtype=self.target_dtype)
+                pos_indices = pos_indices.to(dtype=self.target_dtype)
+                
                 # Combine time series data with position indices
                 xi_combined = torch.cat([xi.reshape(-1, 1), pos_indices], dim=1)
                 patch_input = xi_combined.reshape(pc, self.patch_size * 2)
                 patches_list.append(patch_input)
             else:
                 # No position embedding, use raw patches
+                # Ensure correct dtype
+                xi = xi.to(dtype=self.target_dtype)
+                
                 patch_input = xi
                 patches_list.append(patch_input)
 
@@ -157,6 +178,9 @@ class TimeSeriesEmbedding(nn.Module):
             # print(f"{x.shape=}, {x.device=}, {len(all_position_indices)=}, {batch_position_indices=}")
             batch_pos_emb = self.position_embedding(batch_position_indices)  # Single embedding call
             
+            # Ensure position embeddings have the same dtype as model
+            batch_pos_emb = batch_pos_emb.to(dtype=self.target_dtype)
+            
             # Split embeddings back and create patch inputs
             emb_start_idx = 0
             for patch_info in patch_info_list:
@@ -166,6 +190,9 @@ class TimeSeriesEmbedding(nn.Module):
                 # Extract corresponding embeddings
                 pos_emb = batch_pos_emb[emb_start_idx:emb_start_idx + pc]
                 emb_start_idx += pc
+                
+                # Ensure xi has correct dtype too
+                xi = xi.to(dtype=self.target_dtype)
                 
                 # Flatten and concatenate
                 xi = xi.unsqueeze(-1)  # (num_patches, patch_size, 1)
@@ -180,8 +207,8 @@ class TimeSeriesEmbedding(nn.Module):
             x_patches = torch.cat(patches_list, dim=0)
             x = self.mlp(x_patches)
         else:
-            # Handle empty case
-            x = torch.empty(0, self.hidden_size, device=x.device)
+            # Handle empty case - ensure correct dtype
+            x = torch.empty(0, self.hidden_size, device=x.device, dtype=self.target_dtype)
 
         return x, patch_cnt
 

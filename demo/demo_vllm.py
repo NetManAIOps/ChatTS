@@ -27,16 +27,7 @@ ctx_length = 6000
 
 
 # Load Model with vLLM
-language_model = LLM(
-    model=MODEL_PATH,
-    trust_remote_code=True,
-    max_model_len=ctx_length,
-    tensor_parallel_size=1,
-    gpu_memory_utilization=0.95,
-    limit_mm_per_prompt={"timeseries": 50},
-    # Disable the prefix caching in v1, which may cause some issues.
-    enable_prefix_caching=False
-)
+language_model = LLM(model=MODEL_PATH, trust_remote_code=True, max_model_len=ctx_length, tensor_parallel_size=1, gpu_memory_utilization=0.95, limit_mm_per_prompt={"timeseries": 50})
 
 # Load Time Series Data
 SEQ_LEN_1 = 256
@@ -53,7 +44,7 @@ ts1[103:] -= 10.0
 ts2 = x2 * 0.01
 ts2[100] += 10.0
 prompt = f"I have 2 time series. TS1 is of length {SEQ_LEN_1}: <ts><ts/>; TS2 if of length {SEQ_LEN_2}: <ts><ts/>. Please analyze the local changes in these time series first and then conclude if these time series showing local changes near the same time?"
-prompt = f"<|im_start|>system\nYou are a helpful assistant.<|im_end|><|im_start|>user\n{prompt}<|im_end|><|im_start|>assistant\n"
+prompt = f"<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n"
 
 mm_data = {"timeseries": [ts1.tolist(), ts2.tolist()]}
 inputs = {

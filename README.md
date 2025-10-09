@@ -1,6 +1,6 @@
 <div align="center">
 
-# ChatTS: Understanding, Chat, Reasoning about Time Series with TS-MLLM
+# ChatTS: Time Series LLM for Understanding and Reasoning
 
 [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-FFD21E)](https://huggingface.co/bytedance-research/ChatTS-14B)
 [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20ChatTS-Web%20Demo-blue)](https://huggingface.co/spaces/xiezhe22/ChatTS)
@@ -11,7 +11,7 @@
 
 </div>
 
-`ChatTS` is a Time Series Multimodal LLM focuses on **Understanding and Reasoning** about time series, much like what vision/video/audio-MLLMs do.
+`ChatTS` is a Time Series Multimodal LLM (TS-MLLM) focuses on **Understanding and Reasoning** about time series, much like what vision/video/audio-MLLMs do.
 This repo provides code, datasets and model for `ChatTS` (VLDB' 25): [ChatTS: Aligning Time Series with LLMs via Synthetic Data for Enhanced Understanding and Reasoning](https://arxiv.org/pdf/2412.03104).
 
 ## Web Demo
@@ -58,13 +58,11 @@ A fine-tuned `ChatTS` model (based on a modified version of QWen2.5-14B-Instruct
   - [Step 2: Evaluate the Results](#step-2-evaluate-the-results)
 
 ## News
-- **2025/08/01: We release a [new model (`ChatTS-14B-0801`)](https://huggingface.co/bytedance-research/ChatTS-14B) for better reasoning and Chinese QA ability:**
-  - This new model introduce some minor bug fixes and code changes. We add position_embedding to the TimeSeriesEmbedding for better representation of positions. We have also retrained the model and added more reasoning and Chinese entries in the training dataset for better reasoning and Chinese capabilities. If you want to reproduce the results in the paper, please download the [legacy model](https://huggingface.co/bytedance-research/ChatTS-14B/tree/fea24f221dd13ad310b68cc5470f575647b838c6)
-  - This new model has almost the same evaluation results in terms of categorical metrics and better results in terms of statistical and reasoning metrics
-  - We have also updated the code for data preprocessing in [ChatTS-Training](https://github.com/xiezhe-24/ChatTS-Training). If you want to generate the datasets by yourself, please use `no` encoding instead of `sp` encoding when generating the data.
-- **2025/07/24**: A Web Demo of ChatTS-14B-0801 is available at [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20ChatTS-Web%20Demo-blue)](https://huggingface.co/spaces/xiezhe22/ChatTS)
+- **2025/07/24**: A Web Demo of ChatTS is available at [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20ChatTS-Web%20Demo-blue)](https://huggingface.co/spaces/xiezhe22/ChatTS)
 - **2025/07/03**: The quantized version of ChatTS: `ChatTS-14B-GPTQ-4bit` is available at [HuggingFace](https://huggingface.co/xiezhe24/ChatTS-14B-GPTQ-Int4)!
+- **2025/04/29**: The data generation code has been updated. You can generate the training datasets of `ChatTS` with the updated code now. Please refer to [Training Data Generation](#training-data-generation). We have also open-sourced the implementation for all the baseline models! Please refer to [Evaluation](#evaluation).
 - **2025/04/16**: ChatTS has been accepted by VLDB '25! We have released the training datasets for ChatTS. You can also use the code in this repo to generate data manually and do the model training.
+- **2025/01/01**: We have released a new version of `ChatTS` model, with enhanced CoT and question answering capability. Check [![huggingface](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-FFD21E)](https://huggingface.co/bytedance-research/ChatTS-14B) for more information.
 - **2024/12/30**: A experimental version of `vLLM` support for ChatTS is available! Check [demo_vllm.py](demo/demo_vllm.py) for more information. (**Note**: This version is still under development and may not be stable.) We have also updated the ChatTS model implementation, which supports `kv_cache` and `AutoProcessor` now.
 
 ## Resource Links
@@ -123,7 +121,7 @@ timeseries = np.sin(np.arange(256) / 10) * 5.0
 timeseries[100:] -= 10.0
 prompt = f"I have a time series length of 256: <ts><ts/>. Please analyze the local changes in this time series."
 # Apply Chat Template
-prompt = f"<|im_start|>system\nYou are a helpful assistant.<|im_end|><|im_start|>user\n{prompt}<|im_end|><|im_start|>assistant\n"
+prompt = f"<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n"
 # Convert to tensor
 inputs = processor(text=[prompt], timeseries=[timeseries], padding=True, return_tensors="pt")
 # Move to GPU
@@ -157,12 +155,35 @@ outputs = language_model.generate([{
 ```
 
 ### Training Data Generation
+
+#### Flexible LLM Backend Support
+ChatTS supports both **local LLM inference** and **remote API calls** for data generation:
+
+- **Local LLM Mode**: Uses vLLM for local GPU inference (traditional method)
+- **Remote API Mode**: Uses remote APIs (OpenAI, Claude, etc.) with parallel processing
+
+Configure the mode in `config/datagen_config.yaml`:
+```yaml
+# For local LLM mode
+local_llm_path: "/path/to/your/model"
+
+# For remote API mode  
+remote_api:
+  enabled: true
+  base_url: "https://api.openai.com"
+  api_key: "your-api-key"
+  model: "gpt-4o"
+  max_workers: 8
+```
+
+See [docs/remote_api_usage.md](docs/remote_api_usage.md) for detailed remote API configuration.
+
 1. **Alignment Data Generation.**
-  - **Generate alignment data**. Please first set `local_llm_path` in `config/datagen_config.yaml` to your local LLM for the following steps. Run `bash scripts/generate_align_datasets.sh` to generate the alignment datasets.
+  - **Generate alignment data**. Please first configure your LLM backend in `config/datagen_config.yaml` (either local LLM path or remote API settings). Run `bash scripts/generate_align_datasets.sh` to generate the alignment datasets.
   - **(Optional) To generate your own data.** We provide an example to generate QA through Template. You can modify it according to your own task. Use `python3 -m demo.generate_template_qa` to generate a training dataset with pre-defined templates.
 2. **SFT Data Generation**
   - **Seed QA Generation with LLMs**. Use `python3 -m chatts.sft.generate_llm_qa` to generate a seed QA dataset with LLMs. This dataset and all the previous generated alignment datasets will be used as input of TSEvol.
-  - **TSEvol**. You need a downloaded LLM that can be loaded with `vLLM` to perform this step. The datasets generated in **the previous step** will be used as seed QAs in TSEvol, so please make sure that you have successfully generated the previous datasets before running TSEvol. Run `python3 -m chatts.sft.generate_tsevol_dataset` to generate the TSEvol dataset.
+  - **TSEvol**. You can use either a local LLM (loaded with `vLLM`) or remote API services to perform this step. The datasets generated in **the previous step** will be used as seed QAs in TSEvol, so please make sure that you have successfully generated the previous datasets before running TSEvol. Run `python3 -m chatts.sft.generate_tsevol_dataset` to generate the TSEvol dataset.
   - **IFT Dataset**. Please generate the `alignment datasets` first! The generation of the `IFT (Instruction Following)` datasets takes the labels of the alignment datasets as input and output the ift dataset through a set of predefined templates. Run `python3 -m chatts.sft.generate_ift_dataset` after all the alignment datasets have been successfully generated (in step 1).
 
 #### Notes
@@ -231,10 +252,10 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## Cite
 ```bibtex
-@article{xie2024chatts,
+@inproceedings{xie2025chatts,
   title={ChatTS: Aligning Time Series with LLMs via Synthetic Data for Enhanced Understanding and Reasoning},
   author={Xie, Zhe and Li, Zeyan and He, Xiao and Xu, Longlong and Wen, Xidao and Zhang, Tieying and Chen, Jianjun and Shi, Rui and Pei, Dan},
-  journal={arXiv preprint arXiv:2412.03104},
-  year={2024}
+  booktitle={Proceedings of the VLDB Endowment, 2025},
+  year={2025}
 }
 ```

@@ -9,5 +9,6 @@ sensitive_info_result.txt
 .vscode/
 data/
 exp/
-ckpt
+ckpt*
 vllm_input.txt
+tmp/

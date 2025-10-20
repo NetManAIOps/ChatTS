@@ -467,7 +467,7 @@ def generate_dataset():
 
     # Start a new llm_client
     if not DRYRUN and len(all_qa_pairs) > 0:
-        llm_client = LLMClient(model_path="/mnt/bn/chatts/models/Qwen2.5-14B-Instruct", engine='vllm', batch_size=16)
+        llm_client = LLMClient(model_path=LOCAL_LLM_PATH, engine='vllm', batch_size=16)
         # 生成所有一致性检查的提示
         consistency_prompts = []
         for qa_pair in all_qa_pairs:

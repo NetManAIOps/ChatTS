@@ -46,24 +46,27 @@ ENCODING_METHOD = yaml.safe_load(open("config/datagen_config.yaml"))['encoding_m
 
 ctx_length = 8000
 batch_size = 16
-ENGINE = 'vllm'
+DRYRUN = yaml.safe_load(open("config/datagen_config.yaml"))["dryrun"]
+ENGINE = 'dryrun' if DRYRUN else 'vllm'
 MULTIPROCESS = True
 DFS_K = 3
-TOTAL_CNT = yaml.safe_load(open("config/datagen_config.yaml"))["num_data_tsevol"]
+TOTAL_CNT = yaml.safe_load(open("config/datagen_config.yaml"))["num_data_rewrite"]
 NUM_DATA_LLM = yaml.safe_load(open("config/datagen_config.yaml"))["num_data_llm_qa"]
+NUM_DATA_UTS_REASON = yaml.safe_load(open("config/datagen_config.yaml"))["num_data_uts_reason"]
+NUM_DATA_UTS_REASON_CN = yaml.safe_load(open("config/datagen_config.yaml"))["num_data_uts_reason_cn"]
 
 INPUT_FILES = [
     # (f'{DATA_OUTPUT_DIR}/llm_qa_{NUM_DATA_LLM}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_qa_{NUM_DATA_LLM}_{ENCODING_METHOD}.json'),
     # (f'{DATA_OUTPUT_DIR}/mts_local_llm_{SEQ_LEN}_{NUM_DATA_LLM}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/mts_local_llm_{SEQ_LEN}_{NUM_DATA_LLM}_{ENCODING_METHOD}.json'),
     # (f'{DATA_OUTPUT_DIR}/mts_shape_llm_{SEQ_LEN}_{NUM_DATA_LLM}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/mts_shape_llm_{SEQ_LEN}_{NUM_DATA_LLM}_{ENCODING_METHOD}.json'),
-    (f'{DATA_OUTPUT_DIR}/uts_llm_None_15000_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/uts_llm_None_15000_{ENCODING_METHOD}.json'),
+    # (f'{DATA_OUTPUT_DIR}/uts_llm_{SEQ_LEN}_{NUM_DATA_LLM}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/uts_llm_{SEQ_LEN}_{NUM_DATA_LLM}_{ENCODING_METHOD}.json'),
     # (f'{DATA_OUTPUT_DIR}/llm_uts_reason_500_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_uts_reason_500_{ENCODING_METHOD}.json'),
     # (f'{DATA_OUTPUT_DIR}/llm_mts_reason_1000_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_mts_reason_1000_{ENCODING_METHOD}.json'),
-    (f'{DATA_OUTPUT_DIR}/llm_uts_reason_600_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_uts_reason_600_{ENCODING_METHOD}.json'),
-    (f'{DATA_OUTPUT_DIR}/llm_mts_reason_600_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_mts_reason_600_{ENCODING_METHOD}.json'),
-    (f'{DATA_OUTPUT_DIR}/llm_uts_reason_cn_1500_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_uts_reason_cn_1500_{ENCODING_METHOD}.json'),
+    (f'{DATA_OUTPUT_DIR}/llm_uts_reason_{NUM_DATA_UTS_REASON}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_uts_reason_{NUM_DATA_UTS_REASON}_{ENCODING_METHOD}.json'),
+    # (f'{DATA_OUTPUT_DIR}/llm_mts_reason_{NUM_DATA_UTS_REASON}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_mts_reason_{NUM_DATA_UTS_REASON}_{ENCODING_METHOD}.json'),  # MTS reasoning not implemented yet
+    (f'{DATA_OUTPUT_DIR}/llm_uts_reason_cn_{NUM_DATA_UTS_REASON_CN}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_uts_reason_cn_{NUM_DATA_UTS_REASON_CN}_{ENCODING_METHOD}.json'),
 ]
-OUTPUT_FILE = f'{DATA_OUTPUT_DIR}/rewrite_reason_cn_{TOTAL_CNT}_{ENCODING_METHOD}.jsonl'
+OUTPUT_FILE = f'{DATA_OUTPUT_DIR}/rewrite_reason_{TOTAL_CNT}_{ENCODING_METHOD}.jsonl'
 
 
 def worker_vllm(input_queue, validation_queue, input_response, validation_response, gpu_id, batch_size, finished_flag, model_path=MODEL_PATH):
@@ -110,9 +113,9 @@ def worker_vllm(input_queue, validation_queue, input_response, validation_respon
         logger.error(f"[worker {gpu_id}] {err}")
         time.sleep(5)
 
-def worker_dryrun(input_queue, validation_queue, input_response, validation_response, gpu_id, batch_size, model_path=MODEL_PATH):
+def worker_dryrun(input_queue, validation_queue, input_response, validation_response, gpu_id, batch_size, finished_flag, model_path=MODEL_PATH):
     try:
-        while True:
+        while not finished_flag.value:
             batch_prompts = []
             batch_args = []
             batch_flag = []
@@ -130,7 +133,7 @@ def worker_dryrun(input_queue, validation_queue, input_response, validation_resp
                     batch_flag.append('input')
                 else:
                     break
-            
+
             if batch_prompts:
                 for i in range(len(batch_prompts)):
                     time.sleep(0.05)
@@ -174,7 +177,7 @@ def llm_batch_generate(seed_prompts: List[RewritePrompt], use_chat_template=True
             if engine == 'vllm':
                 p = multiprocessing.Process(target=worker_vllm, args=(input_queue, validation_queue, input_response, output_list, gpu_id_str, batch_size, finished_flag, model_path))
             elif engine == 'dryrun':
-                p = multiprocessing.Process(target=worker_dryrun, args=(input_queue, validation_queue, input_response, output_list, gpu_id_str, batch_size, model_path))
+                p = multiprocessing.Process(target=worker_dryrun, args=(input_queue, validation_queue, input_response, output_list, gpu_id_str, batch_size, finished_flag, model_path))
             else:
                 raise NotImplementedError(f"Unrecognized inference engine: {engine}")
             processes.append(p)

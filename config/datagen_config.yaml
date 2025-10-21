@@ -21,7 +21,11 @@ seq_len: 256
 num_data_template_qa: 20000
 num_data_llm_qa: 15000
 num_data_ift: 10000
-num_data_tsevol: 1000
+num_data_tsevol: 10000
+num_data_uts_reason: 10000
+num_data_uts_reason_cn: 10000
+num_data_mts_reason: 10000
+num_data_rewrite: 10000
 
 # Whether to disable extreme lengths (<64, >1024) (default: false)
 disable_extreme_lengths: false

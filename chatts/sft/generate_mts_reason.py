@@ -317,20 +317,23 @@ def generate_dataset():
         try:
             cur_qa_list = parse_llm_json(llm_answers[i])
             for j, qa in enumerate(cur_qa_list):
-                dataset.append({
-                    'input': result_data[i]['instruction'] + qa['question'],
-                    'output': qa['answer'],
-                    'timeseries': timeseries_to_list(result_data[i]['timeseries'])
-                })
-                labels.append({
-                    'instruction': result_data[i]['instruction'],
-                    'question': qa['question'],
-                    'fields': result_data[i]['fields'],
-                    'ts_idx': result_data[i]['ts_idx'],
-                    'metrics': result_data[i]['metrics'],
-                    'corr_pool': result_data[i]['corr_pool'],
-                    'attribute_pool': result_data[i]['attribute_pool']
-                })
+                if 'question' in qa and 'answer' in qa:
+                    dataset.append({
+                        'input': result_data[i]['instruction'] + qa['question'],
+                        'output': qa['answer'],
+                        'timeseries': timeseries_to_list(result_data[i]['timeseries'])
+                    })
+                    labels.append({
+                        'instruction': result_data[i]['instruction'],
+                        'question': qa['question'],
+                        'fields': result_data[i]['fields'],
+                        'ts_idx': result_data[i]['ts_idx'],
+                        'metrics': result_data[i]['metrics'],
+                        'corr_pool': result_data[i]['corr_pool'],
+                        'attribute_pool': result_data[i]['attribute_pool']
+                    })
+                else:
+                    failed_cnt += 1
         except Exception as err:
             # print(f"Failed to parse LLM output at index {i}: {err}")
             failed_cnt += 1

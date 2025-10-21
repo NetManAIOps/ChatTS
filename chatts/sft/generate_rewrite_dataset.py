@@ -61,8 +61,6 @@ INPUT_FILES = [
     # (f'{DATA_OUTPUT_DIR}/mts_local_llm_{SEQ_LEN}_{NUM_DATA_LLM}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/mts_local_llm_{SEQ_LEN}_{NUM_DATA_LLM}_{ENCODING_METHOD}.json'),
     # (f'{DATA_OUTPUT_DIR}/mts_shape_llm_{SEQ_LEN}_{NUM_DATA_LLM}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/mts_shape_llm_{SEQ_LEN}_{NUM_DATA_LLM}_{ENCODING_METHOD}.json'),
     # (f'{DATA_OUTPUT_DIR}/uts_llm_{SEQ_LEN}_{NUM_DATA_LLM}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/uts_llm_{SEQ_LEN}_{NUM_DATA_LLM}_{ENCODING_METHOD}.json'),
-    # (f'{DATA_OUTPUT_DIR}/llm_uts_reason_500_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_uts_reason_500_{ENCODING_METHOD}.json'),
-    # (f'{DATA_OUTPUT_DIR}/llm_mts_reason_1000_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_mts_reason_1000_{ENCODING_METHOD}.json'),
     (f'{DATA_OUTPUT_DIR}/llm_uts_reason_{NUM_DATA_UTS_REASON}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_uts_reason_{NUM_DATA_UTS_REASON}_{ENCODING_METHOD}.json'),
     (f'{DATA_OUTPUT_DIR}/llm_mts_reason_{NUM_DATA_MTS_REASON}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_mts_reason_{NUM_DATA_MTS_REASON}_{ENCODING_METHOD}.json'),
     (f'{DATA_OUTPUT_DIR}/llm_uts_reason_cn_{NUM_DATA_UTS_REASON_CN}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_uts_reason_cn_{NUM_DATA_UTS_REASON_CN}_{ENCODING_METHOD}.json'),

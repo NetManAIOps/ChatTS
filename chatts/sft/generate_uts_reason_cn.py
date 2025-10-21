@@ -451,11 +451,14 @@ def generate_dataset():
         try:
             cur_qa_list = parse_llm_json(llm_answers[i])
             for j, qa in enumerate(cur_qa_list):
-                all_qa_pairs.append({
-                    'qa': qa,
-                    'result_idx': i,
-                    'qa_idx': j
-                })
+                if 'question' in qa and 'answer' in qa:
+                    all_qa_pairs.append({
+                        'qa': qa,
+                        'result_idx': i,
+                        'qa_idx': j
+                    })
+                else:
+                    failed_cnt += 1
         except Exception as err:
             failed_cnt += 1
             continue

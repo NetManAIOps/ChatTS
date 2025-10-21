@@ -54,6 +54,7 @@ TOTAL_CNT = yaml.safe_load(open("config/datagen_config.yaml"))["num_data_rewrite
 NUM_DATA_LLM = yaml.safe_load(open("config/datagen_config.yaml"))["num_data_llm_qa"]
 NUM_DATA_UTS_REASON = yaml.safe_load(open("config/datagen_config.yaml"))["num_data_uts_reason"]
 NUM_DATA_UTS_REASON_CN = yaml.safe_load(open("config/datagen_config.yaml"))["num_data_uts_reason_cn"]
+NUM_DATA_MTS_REASON = yaml.safe_load(open("config/datagen_config.yaml"))["num_data_mts_reason"]
 
 INPUT_FILES = [
     # (f'{DATA_OUTPUT_DIR}/llm_qa_{NUM_DATA_LLM}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_qa_{NUM_DATA_LLM}_{ENCODING_METHOD}.json'),
@@ -63,7 +64,7 @@ INPUT_FILES = [
     # (f'{DATA_OUTPUT_DIR}/llm_uts_reason_500_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_uts_reason_500_{ENCODING_METHOD}.json'),
     # (f'{DATA_OUTPUT_DIR}/llm_mts_reason_1000_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_mts_reason_1000_{ENCODING_METHOD}.json'),
     (f'{DATA_OUTPUT_DIR}/llm_uts_reason_{NUM_DATA_UTS_REASON}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_uts_reason_{NUM_DATA_UTS_REASON}_{ENCODING_METHOD}.json'),
-    # (f'{DATA_OUTPUT_DIR}/llm_mts_reason_{NUM_DATA_UTS_REASON}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_mts_reason_{NUM_DATA_UTS_REASON}_{ENCODING_METHOD}.json'),  # MTS reasoning not implemented yet
+    (f'{DATA_OUTPUT_DIR}/llm_mts_reason_{NUM_DATA_MTS_REASON}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_mts_reason_{NUM_DATA_MTS_REASON}_{ENCODING_METHOD}.json'),
     (f'{DATA_OUTPUT_DIR}/llm_uts_reason_cn_{NUM_DATA_UTS_REASON_CN}_{ENCODING_METHOD}.jsonl', f'{DATA_OUTPUT_DIR}/evol_labels/llm_uts_reason_cn_{NUM_DATA_UTS_REASON_CN}_{ENCODING_METHOD}.json'),
 ]
 OUTPUT_FILE = f'{DATA_OUTPUT_DIR}/rewrite_reason_{TOTAL_CNT}_{ENCODING_METHOD}.jsonl'

@@ -188,7 +188,7 @@ See [docs/remote_api_usage.md](docs/remote_api_usage.md) for detailed remote API
 
 #### Notes
 - `SEQ_LEN` of generated time series can be configured by setting the `SEQ_LEN` parameter in `config/datagen_config.yaml`. In ChatTS, most of the time series are with length of 256 in the training and evaluation datasets. We also mix time series with other lengths during training (by setting `seq_len=null`) for ChatTS to adapt to time series with different lengths.
-- **Enhanced SFT Data Generation**: Additional data generation scripts are available to enrich training data diversity: `generate_uts_reason.py` (English reasoning QA), `generate_uts_reason_cn.py` (Chinese reasoning QA with consistency checking), and `generate_rewrite_dataset.py` (data augmentation via rewriting). Run `bash scripts/generate_enhanced_sft_datasets.sh` to generate all enhanced datasets.
+- **Enhanced SFT Data Generation**: Additional data generation scripts are used for enriching training data diversity in the ChatTS-14B-0801 Model: `generate_uts_reason.py` (English univariate reasoning QA), `generate_uts_reason_cn.py` (Chinese univariate reasoning QA with consistency checking), `generate_mts_reason.py` (multivariate reasoning QA), and `generate_rewrite_dataset.py` (data augmentation via rewriting). Run `bash scripts/generate_enhanced_sft_datasets.sh` to generate all enhanced datasets.
 
 ### Evaluation
 #### Step 1: vLLM / DeepSpeed Model Inference for Evaluation

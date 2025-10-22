@@ -1,0 +1,240 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ChatTS — Understanding & Reasoning about Time Series</title>
+  <!-- Gradio web component for embedding the Space -->
+  <script type="module" src="https://gradio.s3-us-west-2.amazonaws.com/5.0.1/gradio.js"></script>
+  <style>
+    :root{
+      --bg:#090e1c; --fg:#e8edf8; --muted:#b8c3d9;
+      --brand:#7aa2ff; --accent:#a78bfa; --mint:#34d399; --sun:#f59e0b; --rose:#fb7185; --blue:#60a5fa;
+      --card:#0f1734; --card-2:#101937; --border:#243056;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+         color:var(--fg);background:radial-gradient(1200px 600px at 20% -10%, rgba(122,162,255,.18), transparent 40%),linear-gradient(180deg,#0a0f1f,#0b1126)}
+    a{color:var(--brand);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .container{max-width:1180px;margin:0 auto;padding:32px 20px}
+    header{position:sticky;top:0;background:rgba(9,14,28,.6);backdrop-filter: blur(8px);border-bottom:1px solid var(--border);z-index:10}
+    header .bar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px}
+    .logo{display:flex;gap:10px;align-items:center;font-weight:800}
+    .logo span{background:linear-gradient(90deg,var(--brand),var(--accent));-webkit-background-clip:text;color:transparent}
+    .nav a{margin-left:18px;color:var(--muted)}
+    .hero{padding:56px 0 28px}
+    .hero h1{font-size:44px;line-height:1.1;margin:0 0 16px}
+    .hero p{max-width:900px;color:var(--muted);font-size:18px;margin:0 0 24px}
+    .cta-row{display:flex;gap:12px;flex-wrap:wrap}
+    .btn{display:inline-block;padding:12px 16px;border-radius:14px;border:1px solid var(--border);
+         background:linear-gradient(180deg,#18234a,#141b3d);color:var(--fg);font-weight:600}
+    .btn.secondary{background:#0b1020}
+    .grid{display:grid;gap:16px}
+    .grid.cols-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+    .grid.cols-5{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+    .card{background:linear-gradient(180deg,var(--card),var(--card-2));border:1px solid var(--border);border-radius:16px;padding:18px}
+    .card h3{margin:0 0 8px;font-size:18px}
+    .card p{margin:0;color:var(--muted)}
+    .chip{display:inline-flex;align-items:center;gap:6px;background:#0e1633;border:1px solid var(--border);color:var(--muted);padding:6px 10px;border-radius:999px;font-size:13px}
+    section{padding:28px 0}
+    h2{font-size:28px;margin:0 0 14px}
+    .muted{color:var(--muted)}
+    /* Quick Start colorful cards */
+    .qcard{color:#0b1020;border:none}
+    .q-web{background:linear-gradient(180deg,#c7d2fe,#93c5fd)}
+    .q-inst{background:linear-gradient(180deg,#bef264,#34d399)}
+    .q-depl{background:linear-gradient(180deg,#fcd34d,#f59e0b)}
+    .q-trn{background:linear-gradient(180deg,#fca5a5,#fb7185)}
+    .q-eval{background:linear-gradient(180deg,#a5b4fc,#60a5fa)}
+    .qcard h3{color:#0b1020}
+    .qcard p{color:#0b1020}
+    /* Example buttons */
+    .example-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:8px 0 16px}
+    .example{cursor:pointer;border:1px dashed var(--border);border-radius:12px;padding:12px;background:#0c1330}
+    .example:hover{border-style:solid}
+    /* Demo area */
+    .demo-wrap{position:relative}
+    .overlay-cta{position:absolute;inset:8px auto auto 8px;z-index:5;background:rgba(11,17,38,.85);
+                 border:1px solid var(--border);padding:10px 12px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+    .overlay-cta strong{display:block;margin-bottom:6px}
+    .overlay-cta .btn{padding:8px 10px}
+    gradio-app, iframe{width:100%;height:720px;border:1px solid var(--border);border-radius:16px;background:#000}
+    /* Gallery */
+    .gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+    .gallery img{width:100%;height:180px;object-fit:cover;border-radius:14px;border:1px solid var(--border);background:#0b1020}
+    footer{padding:32px 0;color:var(--muted)}
+    .tiny{font-size:12px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar container">
+      <div class="logo">🔷 <span>ChatTS</span></div>
+      <nav class="nav">
+        <a href="#quickstart">Quick Start</a>
+        <a href="#demo">Web Demo</a>
+        <a href="#resources">Resources</a>
+        <a href="#showcase">Showcase</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="chip">VLDB 2025 • Time Series Multimodal LLM</div>
+      <h1>Understanding & Reasoning about Time Series</h1>
+      <p>ChatTS is a native Time Series Multimodal LLM (TS‑MLLM) for conversational analysis and deep reasoning on multivariate time series. It preserves numerical fidelity, supports flexible lengths and dimensions, and integrates smoothly into existing LLM pipelines.</p>
+      <div class="cta-row">
+        <a class="btn" href="https://xiezhe22-chatts.hf.space" target="_blank" rel="noopener">Open Web Demo</a>
+        <a class="btn secondary" href="https://github.com/NetManAIOps/ChatTS" target="_blank" rel="noopener">GitHub Repo</a>
+        <a class="btn secondary" href="#resources">Models & Datasets</a>
+      </div>
+    </section>
+
+    <section id="quickstart">
+      <h2>Quick Start</h2>
+      <div class="grid cols-5">
+        <a class="card qcard q-web" href="https://xiezhe22-chatts.hf.space" target="_blank" rel="noopener">
+          <h3>Web Demo</h3><p>Run in the browser — no install.</p>
+        </a>
+        <a class="card qcard q-inst" href="https://github.com/NetManAIOps/ChatTS#getting-started" target="_blank" rel="noopener">
+          <h3>Installation</h3><p>Python/torch/flash‑attn & model weights.</p>
+        </a>
+        <a class="card qcard q-depl" href="https://github.com/NetManAIOps/ChatTS#vllm-inference" target="_blank" rel="noopener">
+          <h3>Deployment</h3><p>Transformers, vLLM, or OpenAI‑style server.</p>
+        </a>
+        <a class="card qcard q-trn" href="https://github.com/NetManAIOps/ChatTS#training-data-generation" target="_blank" rel="noopener">
+          <h3>Training</h3><p>Generate alignment/SFT data & fine‑tune.</p>
+        </a>
+        <a class="card qcard q-eval" href="https://github.com/NetManAIOps/ChatTS#evaluation" target="_blank" rel="noopener">
+          <h3>Evaluation</h3><p>Answer generation & scoring pipelines.</p>
+        </a>
+      </div>
+    </section>
+
+    <section id="demo">
+      <h2>Interactive Web Demo</h2>
+      <p class="muted">Use the examples below. If the browser blocks automatic input, click “Click to input” — we’ll copy the prompt and open the Space in a new tab.</p>
+      <div class="example-row" id="examples"></div>
+
+      <div class="demo-wrap">
+        <div class="overlay-cta">
+          <strong>Click to input</strong>
+          <div class="muted tiny" id="hint">Choose an example first, then click.</div>
+          <button class="btn" id="inject">Click to input</button>
+        </div>
+        <!-- Gradio Space embed (recommended) -->
+        <gradio-app id="gradio-embed" src="https://xiezhe22-chatts.hf.space"></gradio-app>
+      </div>
+
+      <p class="tiny">Embedded via Gradio Web Component. Some browsers restrict programmatic input; our overlay provides a reliable fallback.</p>
+    </section>
+
+    <section id="resources">
+      <h2>Resources</h2>
+      <div class="grid cols-3">
+        <a class="card" href="https://arxiv.org/abs/2412.03104" target="_blank" rel="noopener">
+          <h3>Paper (VLDB ’25)</h3><p>ChatTS: Aligning Time Series with LLMs via Synthetic Data.</p>
+        </a>
+        <a class="card" href="https://huggingface.co/ChatTSRepo/ChatTS-14B" target="_blank" rel="noopener">
+          <h3>Model Weights</h3><p>ChatTS‑14B checkpoints on Hugging Face.</p>
+        </a>
+        <a class="card" href="https://huggingface.co/ChatTSRepo/ChatTS-14B-GPTQ-Int4" target="_blank" rel="noopener">
+          <h3>Quantized Model</h3><p>GPTQ Int4 variant for efficient inference.</p>
+        </a>
+        <a class="card" href="https://huggingface.co/datasets/ChatTSRepo/ChatTS-Training-Dataset" target="_blank" rel="noopener">
+          <h3>Training Dataset</h3><p>Synthetic alignment / SFT / IFT data.</p>
+        </a>
+        <a class="card" href="https://doi.org/" target="_blank" rel="noopener">
+          <h3>Evaluation Datasets</h3><p>Zenodo bundle of real & synthetic eval data.</p>
+        </a>
+        <a class="card" href="https://github.com/NetManAIOps/ChatTS-Training" target="_blank" rel="noopener">
+          <h3>Training Scripts</h3><p>End‑to‑end scripts (based on LLaMA‑Factory).</p>
+        </a>
+      </div>
+    </section>
+
+    <section id="showcase">
+      <h2>Showcase</h2>
+      <p class="muted">Visual materials pulled from the repository’s <a href="https://github.com/NetManAIOps/ChatTS/tree/main/figures" target="_blank" rel="noopener">figures</a> folder.</p>
+      <div class="gallery" id="gallery"></div>
+      <p class="tiny">If an image doesn’t load, update the filenames inside <code>window.CHATTS_IMAGES</code> below.</p>
+    </section>
+
+    <footer>
+      <div>© ChatTS Project • <a href="https://github.com/NetManAIOps/ChatTS" target="_blank" rel="noopener">GitHub</a></div>
+    </footer>
+  </main>
+
+  <script>
+    // ---------- FIGURE GALLERY (Edit the filenames below if needed) ----------
+    window.CHATTS_IMAGES = [
+      "overview.png",
+      "architecture.png",
+      "demo.png"
+    ];
+    const FIG_BASE = "https://raw.githubusercontent.com/NetManAIOps/ChatTS/main/figures/";
+    const gallery = document.getElementById("gallery");
+    window.CHATTS_IMAGES.forEach(name => {
+      const img = document.createElement("img");
+      img.loading = "lazy";
+      img.alt = name;
+      img.src = FIG_BASE + name;
+      gallery.appendChild(img);
+    });
+
+    // ---------- EXAMPLE PROMPTS ----------
+    const EXAMPLES = [
+      {
+        title: "Detect spikes",
+        text: "I uploaded a multivariate time series <ts><ts/>. Identify all spikes and report their timestamps and magnitudes. Explain briefly."
+      },
+      {
+        title: "Trend & seasonality",
+        text: "Given the time series <ts><ts/>, describe the trend and seasonality. Estimate the dominant period length and its amplitude."
+      },
+      {
+        title: "Compare two metrics",
+        text: "Two time series <ts><ts/> are provided. Are there lagged correlations? If so, estimate the lag and correlation strength."
+      },
+      {
+        title: "Local change analysis",
+        text: "For the series <ts><ts/>, find intervals with >10% rise or drop relative to the prior 20 points. Return intervals and reasons."
+      }
+    ];
+
+    let selectedPrompt = "";
+    const exDOM = document.getElementById("examples");
+    EXAMPLES.forEach(ex => {
+      const div = document.createElement("div");
+      div.className = "example";
+      div.innerHTML = `<strong>${ex.title}</strong><br><span class="muted">${ex.text.slice(0,120)}…</span>`;
+      div.addEventListener("click", () => {
+        selectedPrompt = ex.text;
+        document.getElementById("hint").textContent = "Ready: click the button to send/open the prompt";
+      });
+      exDOM.appendChild(div);
+    });
+
+    // ---------- INJECT / FALLBACK OPEN ----------
+    const injectBtn = document.getElementById("inject");
+    injectBtn.addEventListener("click", () => {
+      if(!selectedPrompt){
+        document.getElementById("hint").textContent = "Pick an example first 🙂";
+        return;
+      }
+      const url = "https://xiezhe22-chatts.hf.space#prefill=" + encodeURIComponent(selectedPrompt);
+      // Try to copy for convenience
+      if (navigator.clipboard && window.isSecureContext){
+        navigator.clipboard.writeText(selectedPrompt).catch(()=>{}).finally(()=>{
+          window.open(url, "_blank","noopener");
+        });
+      } else {
+        window.open(url, "_blank","noopener");
+      }
+    });
+  </script>
+</body>
+</html>

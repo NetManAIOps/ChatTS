@@ -32,7 +32,7 @@
          background:linear-gradient(180deg,#18234a,#141b3d);color:var(--fg);font-weight:600}
     .btn.secondary{background:#0b1020}
     .grid{display:grid;gap:16px}
-    .grid.cols-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+    .grid.cols-3{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
     .grid.cols-5{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
     .card{background:linear-gradient(180deg,var(--card),var(--card-2));border:1px solid var(--border);border-radius:16px;padding:18px}
     .card h3{margin:0 0 8px;font-size:18px}
@@ -55,7 +55,7 @@
     .example{cursor:pointer;border:1px dashed var(--border);border-radius:12px;padding:12px;background:#0c1330}
     .example:hover{border-style:solid}
     /* Demo area */
-    .demo-wrap{position:relative}
+    .demo-wrap{position:relative;border:0px;}
     .overlay-cta{position:absolute;inset:8px auto auto 8px;z-index:5;background:rgba(11,17,38,.85);
                  border:1px solid var(--border);padding:10px 12px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
     .overlay-cta strong{display:block;margin-bottom:6px}
@@ -87,16 +87,28 @@
       <h1>Understanding & Reasoning about Time Series</h1>
       <p>ChatTS is a native Time Series Multimodal LLM (TS‑MLLM) for conversational analysis and deep reasoning on multivariate time series. It preserves numerical fidelity, supports flexible lengths and dimensions, and integrates smoothly into existing LLM pipelines.</p>
       <div class="cta-row">
-        <a class="btn" href="https://xiezhe22-chatts.hf.space" target="_blank" rel="noopener">Open Web Demo</a>
+        <a class="btn" href="https://xiezhe22-chatts-simpleweb.hf.space" target="_blank" rel="noopener">Open Web Demo</a>
         <a class="btn secondary" href="https://github.com/NetManAIOps/ChatTS" target="_blank" rel="noopener">GitHub Repo</a>
         <a class="btn secondary" href="#resources">Models & Datasets</a>
+      </div>
+    </section>
+
+    <section id="features">
+      <h2>Key Features</h2>
+      <div class="grid cols-3">
+        <div class="card"><h3>Native TS Modality</h3><p>Built for multivariate time series as a first‑class input.</p></div>
+        <div class="card"><h3>Flexible Inputs</h3><p>Handles variable sequence lengths and dimensions in a single prompt.</p></div>
+        <div class="card"><h3>Conversational Reasoning</h3><p>Interactive dialogue to explore trends, anomalies, and statistics.</p></div>
+        <div class="card"><h3>Value‑Preserving Encoding</h3><p>Answers numeric questions precisely (e.g., spike magnitude at <em>t</em>).</p></div>
+        <div class="card"><h3>Easy Integration</h3><p>Works with Transformers and vLLM; supports an OpenAI‑compatible server.</p></div>
+        <div class="card"><h3>Demo & Tools</h3><p>Public web demo, training data/code, and evaluation suites.</p></div>
       </div>
     </section>
 
     <section id="quickstart">
       <h2>Quick Start</h2>
       <div class="grid cols-5">
-        <a class="card qcard q-web" href="https://xiezhe22-chatts.hf.space" target="_blank" rel="noopener">
+        <a class="card qcard q-web" href="https://xiezhe22-chatts-simpleweb.hf.space" target="_blank" rel="noopener">
           <h3>Web Demo</h3><p>Run in the browser — no install.</p>
         </a>
         <a class="card qcard q-inst" href="https://github.com/NetManAIOps/ChatTS#getting-started" target="_blank" rel="noopener">
@@ -116,17 +128,17 @@
 
     <section id="demo">
       <h2>Interactive Web Demo</h2>
-      <p class="muted">Use the examples below. If the browser blocks automatic input, click “Click to input” — we’ll copy the prompt and open the Space in a new tab.</p>
-      <div class="example-row" id="examples"></div>
-
       <div class="demo-wrap">
-        <div class="overlay-cta">
-          <strong>Click to input</strong>
-          <div class="muted tiny" id="hint">Choose an example first, then click.</div>
-          <button class="btn" id="inject">Click to input</button>
-        </div>
         <!-- Gradio Space embed (recommended) -->
-        <gradio-app id="gradio-embed" src="https://xiezhe22-chatts.hf.space"></gradio-app>
+        <gradio-app id="gradio-embed" src="https://xiezhe22-chatts-simpleweb.hf.space/?__theme=dark" style="
+        --body-background-fill:#0b1020;
+        --section-header-text:#e7ecf5;
+        --block-background-fill:#0f172a;
+        --block-border-color:#243056;
+        --border-color-primary:#243056;
+        --input-background-fill:#0f1630;
+        --input-text-color:#e7ecf5;
+      "></gradio-app>
       </div>
 
       <p class="tiny">Embedded via Gradio Web Component. Some browsers restrict programmatic input; our overlay provides a reliable fallback.</p>
@@ -158,22 +170,21 @@
 
     <section id="showcase">
       <h2>Showcase</h2>
-      <p class="muted">Visual materials pulled from the repository’s <a href="https://github.com/NetManAIOps/ChatTS/tree/main/figures" target="_blank" rel="noopener">figures</a> folder.</p>
+      <p class="muted">Use Cases from GitHub <a href="https://github.com/NetManAIOps/ChatTS/tree/main/figures" target="_blank" rel="noopener">figures</a> folder.</p>
       <div class="gallery" id="gallery"></div>
       <p class="tiny">If an image doesn’t load, update the filenames inside <code>window.CHATTS_IMAGES</code> below.</p>
     </section>
 
     <footer>
-      <div>© ChatTS Project • <a href="https://github.com/NetManAIOps/ChatTS" target="_blank" rel="noopener">GitHub</a></div>
+      <div>© Tsinghua University and ByteDance • <a href="https://github.com/NetManAIOps/ChatTS" target="_blank" rel="noopener">GitHub</a></div>
     </footer>
   </main>
 
   <script>
     // ---------- FIGURE GALLERY (Edit the filenames below if needed) ----------
     window.CHATTS_IMAGES = [
-      "overview.png",
-      "architecture.png",
-      "demo.png"
+      "case_studies.png",
+      "chat_example.png",
     ];
     const FIG_BASE = "https://raw.githubusercontent.com/NetManAIOps/ChatTS/main/figures/";
     const gallery = document.getElementById("gallery");
@@ -183,57 +194,6 @@
       img.alt = name;
       img.src = FIG_BASE + name;
       gallery.appendChild(img);
-    });
-
-    // ---------- EXAMPLE PROMPTS ----------
-    const EXAMPLES = [
-      {
-        title: "Detect spikes",
-        text: "I uploaded a multivariate time series <ts><ts/>. Identify all spikes and report their timestamps and magnitudes. Explain briefly."
-      },
-      {
-        title: "Trend & seasonality",
-        text: "Given the time series <ts><ts/>, describe the trend and seasonality. Estimate the dominant period length and its amplitude."
-      },
-      {
-        title: "Compare two metrics",
-        text: "Two time series <ts><ts/> are provided. Are there lagged correlations? If so, estimate the lag and correlation strength."
-      },
-      {
-        title: "Local change analysis",
-        text: "For the series <ts><ts/>, find intervals with >10% rise or drop relative to the prior 20 points. Return intervals and reasons."
-      }
-    ];
-
-    let selectedPrompt = "";
-    const exDOM = document.getElementById("examples");
-    EXAMPLES.forEach(ex => {
-      const div = document.createElement("div");
-      div.className = "example";
-      div.innerHTML = `<strong>${ex.title}</strong><br><span class="muted">${ex.text.slice(0,120)}…</span>`;
-      div.addEventListener("click", () => {
-        selectedPrompt = ex.text;
-        document.getElementById("hint").textContent = "Ready: click the button to send/open the prompt";
-      });
-      exDOM.appendChild(div);
-    });
-
-    // ---------- INJECT / FALLBACK OPEN ----------
-    const injectBtn = document.getElementById("inject");
-    injectBtn.addEventListener("click", () => {
-      if(!selectedPrompt){
-        document.getElementById("hint").textContent = "Pick an example first 🙂";
-        return;
-      }
-      const url = "https://xiezhe22-chatts.hf.space#prefill=" + encodeURIComponent(selectedPrompt);
-      // Try to copy for convenience
-      if (navigator.clipboard && window.isSecureContext){
-        navigator.clipboard.writeText(selectedPrompt).catch(()=>{}).finally(()=>{
-          window.open(url, "_blank","noopener");
-        });
-      } else {
-        window.open(url, "_blank","noopener");
-      }
     });
   </script>
 </body>

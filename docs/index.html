@@ -24,8 +24,9 @@
     .logo{display:flex;gap:10px;align-items:center;font-weight:800}
     .logo span{background:linear-gradient(90deg,var(--brand),var(--accent));-webkit-background-clip:text;color:transparent}
     .nav a{margin-left:18px;color:var(--muted)}
-    .hero{padding:56px 0 28px}
-    .hero h1{font-size:44px;line-height:1.1;margin:0 0 16px}
+    /* Make the header logo a bit larger */
+    .logo { font-size:20px; }
+    .logo span { font-size:1.15em; }.hero h1{font-size:44px;line-height:1.1;margin:0 0 16px}
     .hero p{max-width:900px;color:var(--muted);font-size:18px;margin:0 0 24px}
     .cta-row{display:flex;gap:12px;flex-wrap:wrap}
     .btn{display:inline-block;padding:12px 16px;border-radius:14px;border:1px solid var(--border);
@@ -84,8 +85,8 @@
   <main class="container">
     <section class="hero">
       <div class="chip">VLDB 2025 • Time Series Multimodal LLM</div>
-      <h1>Understanding & Reasoning about Time Series</h1>
-      <p>ChatTS is a native Time Series Multimodal LLM (TS‑MLLM) for conversational analysis and deep reasoning on multivariate time series. It preserves numerical fidelity, supports flexible lengths and dimensions, and integrates smoothly into existing LLM pipelines.</p>
+      <h1>ChatTS: Understanding & Reasoning about Time Series</h1>
+      <p>ChatTS is a native Time Series Multimodal LLM (TS-MLLM) for conversational analysis and reasoning on multivariate time series. It preserves numerical values, supports flexible lengths and dimensions, and integrates smoothly into existing LLM pipelines.</p>
       <div class="cta-row">
         <a class="btn" href="https://xiezhe22-chatts-simpleweb.hf.space" target="_blank" rel="noopener">Open Web Demo</a>
         <a class="btn secondary" href="https://github.com/NetManAIOps/ChatTS" target="_blank" rel="noopener">GitHub Repo</a>
@@ -99,7 +100,7 @@
         <div class="card"><h3>Native TS Modality</h3><p>Built for multivariate time series as a first‑class input.</p></div>
         <div class="card"><h3>Flexible Inputs</h3><p>Handles variable sequence lengths and dimensions in a single prompt.</p></div>
         <div class="card"><h3>Conversational Reasoning</h3><p>Interactive dialogue to explore trends, anomalies, and statistics.</p></div>
-        <div class="card"><h3>Value‑Preserving Encoding</h3><p>Answers numeric questions precisely (e.g., spike magnitude at <em>t</em>).</p></div>
+        <div class="card"><h3>Value-Preserving Encoding</h3><p>Answers numeric questions precisely (e.g., spike magnitude at <em>t</em>).</p></div>
         <div class="card"><h3>Easy Integration</h3><p>Works with Transformers and vLLM; supports an OpenAI‑compatible server.</p></div>
         <div class="card"><h3>Demo & Tools</h3><p>Public web demo, training data/code, and evaluation suites.</p></div>
       </div>
@@ -150,19 +151,19 @@
         <a class="card" href="https://arxiv.org/abs/2412.03104" target="_blank" rel="noopener">
           <h3>Paper (VLDB ’25)</h3><p>ChatTS: Aligning Time Series with LLMs via Synthetic Data.</p>
         </a>
-        <a class="card" href="https://huggingface.co/ChatTSRepo/ChatTS-14B" target="_blank" rel="noopener">
+        <a class="card" href="https://huggingface.co/bytedance-research/ChatTS-14B" target="_blank" rel="noopener">
           <h3>Model Weights</h3><p>ChatTS‑14B checkpoints on Hugging Face.</p>
         </a>
-        <a class="card" href="https://huggingface.co/ChatTSRepo/ChatTS-14B-GPTQ-Int4" target="_blank" rel="noopener">
+        <a class="card" href="https://huggingface.co/xiezhe24/ChatTS-14B-GPTQ-Int4" target="_blank" rel="noopener">
           <h3>Quantized Model</h3><p>GPTQ Int4 variant for efficient inference.</p>
         </a>
         <a class="card" href="https://huggingface.co/datasets/ChatTSRepo/ChatTS-Training-Dataset" target="_blank" rel="noopener">
           <h3>Training Dataset</h3><p>Synthetic alignment / SFT / IFT data.</p>
         </a>
-        <a class="card" href="https://doi.org/" target="_blank" rel="noopener">
+        <a class="card" href="https://zenodo.org/records/14349206" target="_blank" rel="noopener">
           <h3>Evaluation Datasets</h3><p>Zenodo bundle of real & synthetic eval data.</p>
         </a>
-        <a class="card" href="https://github.com/NetManAIOps/ChatTS-Training" target="_blank" rel="noopener">
+        <a class="card" href="https://github.com/xiezhe-24/ChatTS-Training" target="_blank" rel="noopener">
           <h3>Training Scripts</h3><p>End‑to‑end scripts (based on LLaMA‑Factory).</p>
         </a>
       </div>

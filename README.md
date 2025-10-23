@@ -23,18 +23,18 @@ Check out the [Case Studies](#case-studies) section for more real-world applicat
 
 ## What ChatTS Does
 
-* ✅ **Native multivariate support**
+* ✅ **Native multivariate support:**
   Works with multiple time series **of different lengths** and **flexible dimensionality** in one prompt.
 
-* ✅ **Conversational understanding + reasoning**
+* ✅ **Conversational understanding + reasoning:**
   Interactively explore structure, changes, and relationships across series.
 
-* ✅ **Value-preserving encoding**
+* ✅ **Value-preserving encoding:**
   Retains **raw numerical values** so the model can answer questions like
   *“How large is the spike at timestamp *t*?”*
 
-* ✅ **Easy integration**
-  Plug into standard LLM pipelines; supports Transformers and vLLM (with the registration patch).
+* ✅ **Easy integration:**
+  Plug into standard LLM pipelines; supports Transformers and vLLM (see the instructions below).
 
 **Example application**
 See `figures/chat_example.png` and the **Case Studies** section for real-world scenarios and conversation examples.
@@ -134,15 +134,15 @@ outputs = language_model.generate([{
 
 ### 5) OpenAI-Compatible Server (vLLM)
 
-You can deploy an OpenAI API–compatible server using vLLM. The following **text replaces the original Issue #11 link** and summarizes the necessary steps:
+You can deploy an OpenAI API–compatible server using vLLM:
 
 * Install a vLLM build that includes ChatTS registration and multimodal timeseries support.
 * Start the server, passing trust/override flags so vLLM recognizes the ChatTS model type, and set a per-prompt limit for timeseries inputs.
 
-Example command:
+Example command to start the server:
 
 ```bash
-vllm serve ./ckpt \
+VLLM_ALLOW_INSECURE_SERIALIZATION=1 vllm serve ./ckpt \
   --served-model-name chatts \
   --trust-remote-code \
   --hf-overrides '{"model_type":"chatts"}' \
@@ -155,11 +155,7 @@ vllm serve ./ckpt \
   --uvicorn-log-level debug
 ```
 
-If client calls fail with a 500 error during serialization, set:
-
-```bash
-export VLLM_ALLOW_INSECURE_SERIALIZATION=1
-```
+Refer to [#11](https://github.com/NetManAIOps/ChatTS/issues/11) for more instructions on how to call the API with Python.
 
 ---
 

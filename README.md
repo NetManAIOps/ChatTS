@@ -14,6 +14,10 @@
 
 `ChatTS` is a Time Series Multimodal LLM (TS-MLLM) focused on **understanding** and **reasoning** over time series—similar in spirit to vision/video/audio MLLMs, but **natively built for time series**. This repository provides code, datasets, and the **ChatTS-14B-0801** model (VLDB’25): *ChatTS: Aligning Time Series with LLMs via Synthetic Data for Enhanced Understanding and Reasoning*.
 
+![Chat](figures/chat_example.png)
+
+Check out the [Case Studies](#case-studies) section for more real-world applications and sample conversations.
+
 ---
 
 ## What ChatTS Does
@@ -290,6 +294,13 @@ See `demo/demo_ts_generator.ipynb`.
 * RAGAS ([https://github.com/explodinggradients/ragas](https://github.com/explodinggradients/ragas))
 * vLLM ([https://github.com/vllm-project/vllm](https://github.com/vllm-project/vllm))
 * Flash-Attention ([https://github.com/Dao-AILab/flash-attention](https://github.com/Dao-AILab/flash-attention))
+
+---
+
+## Case Studies
+![image](figures/case_studies.png)
+In `ChatTS`, we mainly focus on **Understanding and Reasoning** about time series, just like what vision/video/audio-MLLMs do, rather than conducting time series prediction, anomaly detection and classification tasks.
+You can try more application scenarios of ChatTS by modifying the time series and the text of questions in `demo_hf.ipynb`! 
 
 ---
 

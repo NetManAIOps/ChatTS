@@ -2,13 +2,14 @@
 
 # ChatTS: Time Series LLM for Understanding and Reasoning
 
-[🌐 Website](https://netmanaiops.github.io/ChatTS/) ·
-[🤗 **Model (ChatTS-14B-0801)**](https://huggingface.co/bytedance-research/ChatTS-14B) ·
-[🧰 **Training Scripts**](https://github.com/xiezhe-24/ChatTS-Training) ·
-[📚 **Training Datasets**](https://huggingface.co/datasets/ChatTSRepo/ChatTS-Training-Dataset) ·
-[🧪 **Evaluation Datasets**](https://doi.org/10.5281/zenodo.14349206) ·
-[🧪 **Web Demo**](https://huggingface.co/spaces/xiezhe22/ChatTS) ·
-[📄 **Paper**](https://arxiv.org/abs/2412.03104)
+[[🌐 **Website**]](https://netmanaiops.github.io/ChatTS/) ·
+[[🤗 **Model**]](https://huggingface.co/bytedance-research/ChatTS-14B) ·
+[[🤗 **Web Demo**]](https://huggingface.co/spaces/xiezhe22/ChatTS) ·
+[[📄 **Paper**]](https://arxiv.org/abs/2412.03104)
+
+[[🧰 **Training Scripts**]](https://github.com/xiezhe-24/ChatTS-Training) ·
+[[📚 **Training Datasets**]](https://huggingface.co/datasets/ChatTSRepo/ChatTS-Training-Dataset) ·
+[[🧪 **Evaluation Datasets**]](https://doi.org/10.5281/zenodo.14349206)
 
 </div>
 

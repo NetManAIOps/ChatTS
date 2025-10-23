@@ -12,3 +12,4 @@ exp/
 ckpt*
 vllm_input.txt
 tmp/
+vllm/

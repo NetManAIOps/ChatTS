@@ -1,16 +1,14 @@
-numpy
+numpy<2.0.0
 scipy
 pandas
 loguru
-deepspeed
+deepspeed==0.16.9
 torch==2.6.0
 transformers==4.52.4
-flash-attn
 PyWavelets
 matplotlib
 tqdm
 sktime
-vllm==0.8.5
 ragas==0.1.9
 langchain==0.2.15
 langchain-chroma==0.1.1
@@ -22,3 +20,11 @@ langchain-text-splitters==0.2.0
 langchainhub==0.1.16
 PyYAML
 json-repair
+setuptools_scm
+
+# Install flash-attn
+https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.3/flash_attn-2.7.3+cu12torch2.6cxx11abiFALSE-cp311-cp311-linux_x86_64.whl ; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
+https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.3/flash_attn-2.7.3+cu12torch2.6cxx11abiFALSE-cp312-cp312-linux_x86_64.whl ; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.12"
+
+# Install vllm
+vllm==0.8.5

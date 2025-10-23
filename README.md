@@ -62,8 +62,8 @@ Use the Web Demo on Hugging Face Spaces:
 You can upload your `.csv` file (example: `demo/ts_example.csv`) and chat with ChatTS-14B-0801 about your data.
 
 ### 2) Install & Prepare
-**Requirements (for inference):** `python>=3.11`, `torch==2.6.0`, `vllm==0.8.5`, `deepspeed`, `flash-attn` (see `requirements.txt`).  
-**Hardware:** ChatTS-14B-0801 is a 14B model. Use a GPU with sufficient memory and ensure your GPU supports Flash-Attention (e.g., A100/A800).
+**Requirements (for inference):** `python==3.11` and `pip install -r requirements.txt`.  
+**Hardware:** ChatTS-14B-0801 is a 14B model. Use a GPU with sufficient memory and ensure your GPU supports Flash-Attention (e.g., A100/A800 are recommended).
 
 **Steps**
 1. **Download model weights**:  
@@ -77,22 +77,25 @@ ChatTS-14B-0801 supports **Value-Preserved Time Series Encoding** via `AutoProce
 
 ```python
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor
-import torch, numpy as np
+import torch
+import numpy as np
 
-# 1) Load model, tokenizer, processor
-model = AutoModelForCausalLM.from_pretrained("./ckpt", trust_remote_code=True, device_map=0, torch_dtype='float16')
-tokenizer = AutoTokenizer.from_pretrained("./ckpt", trust_remote_code=True)
-processor = AutoProcessor.from_pretrained("./ckpt", trust_remote_code=True, tokenizer=tokenizer)
-
-# 2) Prepare a timeseries and prompt
+# Load the model, tokenizer and processor
+MODEL_PATH = "./ckpt"
+model = AutoModelForCausalLM.from_pretrained(MODEL_PATH, trust_remote_code=True, device_map=0, torch_dtype='float16')
+tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH, trust_remote_code=True)
+processor = AutoProcessor.from_pretrained(MODEL_PATH, trust_remote_code=True, tokenizer=tokenizer)
+# Create time series and prompts
 timeseries = np.sin(np.arange(256) / 10) * 5.0
 timeseries[100:] -= 10.0
-prompt = "I have a time series length of 256: <ts><ts/>. Please analyze the local changes in this time series."
+prompt = f"I have a time series length of 256: <ts><ts/>. Please analyze the local changes in this time series."
+# Apply Chat Template
 prompt = f"<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n"
-
-# 3) Preprocess & generate
+# Convert to tensor
 inputs = processor(text=[prompt], timeseries=[timeseries], padding=True, return_tensors="pt")
+# Move to GPU
 inputs = {k: v.to(0) for k, v in inputs.items()}
+# Model Generate
 outputs = model.generate(**inputs, max_new_tokens=300)
 print(tokenizer.decode(outputs[0][len(inputs['input_ids'][0]):], skip_special_tokens=True))
 ```
@@ -102,22 +105,21 @@ print(tokenizer.decode(outputs[0][len(inputs['input_ids'][0]):], skip_special_to
 * Recommended time series length: **64–1024**; up to **30** series per input. Very short series (<64) may be less reliable (to be improved).
 * See `demo/demo_hf.ipynb` for more examples.
 
-### 4) vLLM Inference (Experimental)
+### 4) vLLM Inference
 
 vLLM does not natively ship ChatTS support; we provide a registration patch.
 Before loading with vLLM, **register ChatTS**:
 
 ```python
-# in your script, before constructing LLM()
+# (IMPORTANT) Make sure to import this file in your script, before constructing LLM()
 import chatts.vllm.chatts_vllm
-
 from vllm import LLM, SamplingParams
 
-ctx_length = 6000
+MODEL_PATH = "./ckpt"
 language_model = LLM(
-    model="./ckpt",
+    model=MODEL_PATH,
     trust_remote_code=True,
-    max_model_len=ctx_length,
+    max_model_len=6000,
     tensor_parallel_size=1,
     gpu_memory_utilization=0.95,
     limit_mm_per_prompt={"timeseries": 50}
@@ -132,30 +134,24 @@ outputs = language_model.generate([{
 }], sampling_params=SamplingParams(max_tokens=300))
 ```
 
-### 5) OpenAI-Compatible Server (vLLM)
+### 5) OpenAI API-Compatible Server (vLLM)
 
 You can deploy an OpenAI API–compatible server using vLLM:
 
-* Install a vLLM build that includes ChatTS registration and multimodal timeseries support.
-* Start the server, passing trust/override flags so vLLM recognizes the ChatTS model type, and set a per-prompt limit for timeseries inputs.
-
-Example command to start the server:
-
-```bash
-VLLM_ALLOW_INSECURE_SERIALIZATION=1 vllm serve ./ckpt \
-  --served-model-name chatts \
-  --trust-remote-code \
-  --hf-overrides '{"model_type":"chatts"}' \
-  --max-model-len 6000 \
-  --gpu-memory-utilization 0.97 \
-  --limit-mm-per-prompt timeseries=15 \
-  --allowed-local-media-path $(pwd) \
-  --host 0.0.0.0 \
-  --port 12345 \
-  --uvicorn-log-level debug
+* **(IMPORTANT)** Reinstall a modified vLLM build with the following command. Note that this will uninstall the previously installed vllm and PyTorch. You will be asked to input the path to the install location.
+```sh
+bash scripts/install_vllm_server.sh
 ```
 
-Refer to [#11](https://github.com/NetManAIOps/ChatTS/issues/11) for more instructions on how to call the API with Python.
+* Start the server:
+
+Example command to start serving (set the correct model path and port before starting the server):
+
+```bash
+bash scripts/start_vllm_server.sh
+```
+
+We provide a demo at [demo/vllm_api.py](demo/vllm_api.py) to show how to call the API for ChatTS.
 
 ---
 

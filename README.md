@@ -3,7 +3,8 @@
 # ChatTS: Time Series LLM for Understanding and Reasoning
 
 [[🌐 **Website**]](https://netmanaiops.github.io/ChatTS/) ·
-[[🤗 **Model**]](https://huggingface.co/bytedance-research/ChatTS-14B) ·
+[[🤗 **ChatTS-8B Model**]](https://huggingface.co/bytedance-research/ChatTS-8B) ·
+[[🤗 **ChatTS-14B Model**]](https://huggingface.co/bytedance-research/ChatTS-14B) ·
 [[🤗 **Web Demo**]](https://huggingface.co/spaces/xiezhe22/ChatTS) ·
 [[📄 **Paper**]](https://arxiv.org/abs/2412.03104)
 
@@ -43,6 +44,7 @@ See `figures/chat_example.png` and the **Case Studies** section for real-world s
 
 ## News
 
+* **2025/11/03**: We release the new [ChatTS-8B](https://huggingface.co/bytedance-research/ChatTS-8B) model for efficient training and deployment.
 * **2025/10/23**: The [official website of ChatTS](https://netmanaiops.github.io/ChatTS/) launched.
 * **2025/08/01**: `ChatTS-14B-0801` model launched with enhanced reasoning compability and Chinese support.
 * **2025/07/24**: Web Demo launched on Hugging Face Spaces.

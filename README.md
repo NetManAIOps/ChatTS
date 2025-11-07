@@ -276,6 +276,7 @@ See `demo/demo_ts_generator.ipynb`.
 | **Paper (VLDB’25)**         | [https://arxiv.org/abs/2412.03104](https://arxiv.org/abs/2412.03104)                                                                     | ChatTS paper                  |
 | **ChatTS-8B-1103 Model** | [https://huggingface.co/bytedance-research/ChatTS-8B](https://huggingface.co/bytedance-research/ChatTS-8B)                             | Model weights                 |
 | **ChatTS-14B-0801 Model** | [https://huggingface.co/bytedance-research/ChatTS-14B](https://huggingface.co/bytedance-research/ChatTS-14B)                             | Model weights                 |
+| **ChatTS-8B-GPTQ-Int4**    | [https://huggingface.co/xiezhe24/ChatTS-8B-GPTQ-Int4](https://huggingface.co/xiezhe24/ChatTS-8B-GPTQ-Int4)                             | Quantized model               |
 | **ChatTS-14B-GPTQ-Int4**    | [https://huggingface.co/xiezhe24/ChatTS-14B-GPTQ-Int4](https://huggingface.co/xiezhe24/ChatTS-14B-GPTQ-Int4)                             | Quantized model               |
 | **Training Datasets**       | [https://huggingface.co/datasets/ChatTSRepo/ChatTS-Training-Dataset](https://huggingface.co/datasets/ChatTSRepo/ChatTS-Training-Dataset) | Synthetic training set        |
 | **Evaluation Datasets**     | [https://doi.org/10.5281/zenodo.14349206](https://doi.org/10.5281/zenodo.14349206)                                                       | Real & synthetic eval data    |

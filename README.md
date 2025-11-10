@@ -2,11 +2,11 @@
 
 # ChatTS: Time Series LLM for Understanding and Reasoning
 
-[[🌐 **Website**]](https://netmanaiops.github.io/ChatTS/) ·
+[[🤗 **Web Demo**]](https://huggingface.co/spaces/xiezhe22/ChatTS) ·
 [[🤗 **ChatTS-8B Model**]](https://huggingface.co/bytedance-research/ChatTS-8B) ·
 [[🤗 **ChatTS-14B Model**]](https://huggingface.co/bytedance-research/ChatTS-14B) ·
-[[🤗 **Web Demo**]](https://huggingface.co/spaces/xiezhe22/ChatTS) ·
-[[📄 **Paper**]](https://arxiv.org/abs/2412.03104)
+[[📄 **Paper**]](https://www.vldb.org/pvldb/vol18/p2385-xie.pdf) ·
+[[🌐 **Website**]](https://netmanaiops.github.io/ChatTS/)
 
 [[🧰 **Training Scripts**]](https://github.com/xiezhe-24/ChatTS-Training) ·
 [[📚 **Training Datasets**]](https://huggingface.co/datasets/ChatTSRepo/ChatTS-Training-Dataset) ·
@@ -14,7 +14,7 @@
 
 </div>
 
-`ChatTS` is a Time Series Multimodal LLM (TS-MLLM) focused on **understanding** and **reasoning** over time series—similar in spirit to vision/video/audio MLLMs, but **natively built for time series**. This repository provides code, datasets, and the **ChatTS-14B-0801** model (VLDB’25): *ChatTS: Aligning Time Series with LLMs via Synthetic Data for Enhanced Understanding and Reasoning*.
+`ChatTS` is a Time Series Multimodal LLM (TS-MLLM) focused on **understanding** and **reasoning** over time series, just like vision/video/audio MLLMs, but **natively built for time series**. This repository provides code, datasets, and the **ChatTS-14B-0801** model (VLDB’25): *ChatTS: Aligning Time Series with LLMs via Synthetic Data for Enhanced Understanding and Reasoning*.
 
 ![Chat](figures/chat_example.png)
 
@@ -30,8 +30,8 @@ Check out the [Case Studies](#case-studies) section for more real-world applicat
 * ✅ **Conversational understanding + reasoning:**
   Interactively explore structure, changes, and relationships across series.
 
-* ✅ **Value-preserving encoding:**
-  Retains **raw numerical values** so the model can answer questions like
+* ✅ **Value-related QA:**
+  ChatTS retains **raw numerical values** so the model can answer questions like
   *“How large is the spike at timestamp *t*?”*
 
 * ✅ **Easy integration:**
@@ -61,21 +61,21 @@ See `figures/chat_example.png` and the **Case Studies** section for real-world s
 ### 1) Try It in the Browser (no install)
 Use the Web Demo on Hugging Face Spaces:  
 **👉 [ChatTS Web Demo](https://huggingface.co/spaces/xiezhe22/ChatTS)**  
-You can upload your `.csv` file (example: `demo/ts_example.csv`) and chat with ChatTS-14B-0801 about your data.
+You can upload your `.csv` file (example: `demo/ts_example.csv`) and chat with ChatTS-8B/14B about your data.
 
 ### 2) Install & Prepare
 **Requirements (for inference):** `python==3.11` and `pip install -r requirements.txt`.  
-**Hardware:** ChatTS-14B-0801 is a 14B model. Use a GPU with sufficient memory and ensure your GPU supports Flash-Attention (e.g., A100/A800 are recommended).
+**Hardware:** Use a GPU with sufficient memory for 8B or 14B LLMs and ensure your GPU supports Flash-Attention (e.g., A100/A800 are recommended).
 
 **Steps**
-1. **Download model weights**:  
-   - [ChatTS-14B-0801 on Hugging Face](https://huggingface.co/bytedance-research/ChatTS-14B)  
-   - Unzip into `./ckpt/` (files like `ckpt/config.json`, etc.)
+1. **Download model weights**: Download any one of the following models and Unzip into `./ckpt/` (files like `ckpt/config.json`, etc.):
+  - Choice 1: [ChatTS-8B on Hugging Face](https://huggingface.co/bytedance-research/ChatTS-8B)
+  - Choice 2: [ChatTS-14B on Hugging Face](https://huggingface.co/bytedance-research/ChatTS-14B)
 2. (**Optional for local evaluation**) Download evaluation datasets to `evaluation/dataset/`:  
    - `dataset_a.json`, `dataset_b.json` from [Zenodo](https://doi.org/10.5281/zenodo.14349206).
 
 ### 3) Deploy with Transformers
-ChatTS-14B-0801 supports **Value-Preserved Time Series Encoding** via `AutoProcessor` and an `sp` mask for variable-length batches.
+ChatTS supports **Value-Preserved Time Series Encoding** via `AutoProcessor` and an `sp` mask for variable-length batches.
 
 ```python
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor
@@ -109,8 +109,9 @@ print(tokenizer.decode(outputs[0][len(inputs['input_ids'][0]):], skip_special_to
 
 ### 4) vLLM Inference
 
-vLLM does not natively ship ChatTS support; we provide a registration patch.
-Before loading with vLLM, **register ChatTS**:
+`vLLM` does not natively ship ChatTS support. We provide a registration patch. Refer to [demo_vllm.py](demo/demo_vllm.py) for detailed usage.
+
+Basic usage: Before loading with vLLM, **register ChatTS** with `chatts.vllm.chatts_vllm`:
 
 ```python
 # (IMPORTANT) Make sure to import this file in your script, before constructing LLM()
@@ -161,23 +162,7 @@ We provide a demo at [demo/vllm_api.py](demo/vllm_api.py) to show how to call th
 
 We provide a full pipeline and **two modes** for generating data:
 
-* **Local LLM mode (vLLM)** — traditional local GPU inference.
-* **Remote API mode** — call OpenAI/Claude, etc., with parallel workers.
-
-Configure in `config/datagen_config.yaml`:
-
-```yaml
-# Local LLM mode
-local_llm_path: "/path/to/your/model"
-
-# Remote API mode
-remote_api:
-  enabled: true
-  base_url: "https://api.openai.com"
-  api_key: "your-api-key"
-  model: "gpt-4o"
-  max_workers: 8
-```
+- Before data generation, set `local_llm_path` to the path of any local LLMs (`Qwen2.5-32B-Instruct` is recommended) in `config/datagen_config.yaml`.
 
 ### Data Generation Steps
 
@@ -189,11 +174,6 @@ remote_api:
    bash scripts/generate_align_datasets.sh
    ```
 
-   * (Optional) Template-based seed QAs:
-
-   ```bash
-   python3 -m demo.generate_template_qa
-   ```
 2. **SFT datasets**
 
    * LLM-generated seed QAs:
@@ -216,8 +196,8 @@ remote_api:
 
 **Sequence length**: configure `SEQ_LEN` in `config/datagen_config.yaml`. ChatTS commonly uses length **256** (we also mix other lengths via `seq_len=null`).
 
-**Enhanced SFT (used by ChatTS-14B-0801)**
-Scripts for diversified SFT data:
+**Enhanced SFT**
+(Optional) Scripts for diversified SFT data:
 
 * `generate_uts_reason.py` (English univariate reasoning)
 * `generate_uts_reason_cn.py` (Chinese univariate reasoning w/ consistency checks)
@@ -230,9 +210,9 @@ Run all at once:
 bash scripts/generate_enhanced_sft_datasets.sh
 ```
 
-**Fine-tuning**
+### Model Training
 Use **ChatTS-Training** (modified from LLaMA-Factory):
-👉 [https://github.com/xiezhe-24/ChatTS-Training](https://github.com/xiezhe-24/ChatTS-Training)
+👉 [https://github.com/xiezhe-24/ChatTS-Training](https://github.com/xiezhe-24/ChatTS-Training) and refer to the steps in the README.
 
 ---
 
@@ -273,7 +253,7 @@ See `demo/demo_ts_generator.ipynb`.
 
 | Resource                    | Link                                                                                                                                     | Description                   |
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
-| **Paper (VLDB’25)**         | [https://arxiv.org/abs/2412.03104](https://arxiv.org/abs/2412.03104)                                                                     | ChatTS paper                  |
+| **Paper (VLDB’25)**         | [https://www.vldb.org/pvldb/vol18/p2385-xie.pdf](https://www.vldb.org/pvldb/vol18/p2385-xie.pdf)                                                                     | ChatTS paper                  |
 | **ChatTS-8B-1103 Model** | [https://huggingface.co/bytedance-research/ChatTS-8B](https://huggingface.co/bytedance-research/ChatTS-8B)                             | Model weights                 |
 | **ChatTS-14B-0801 Model** | [https://huggingface.co/bytedance-research/ChatTS-14B](https://huggingface.co/bytedance-research/ChatTS-14B)                             | Model weights                 |
 | **ChatTS-8B-GPTQ-Int4**    | [https://huggingface.co/xiezhe24/ChatTS-8B-GPTQ-Int4](https://huggingface.co/xiezhe24/ChatTS-8B-GPTQ-Int4)                             | Quantized model               |
@@ -291,6 +271,18 @@ See `demo/demo_ts_generator.ipynb`.
 * RAGAS ([https://github.com/explodinggradients/ragas](https://github.com/explodinggradients/ragas))
 * vLLM ([https://github.com/vllm-project/vllm](https://github.com/vllm-project/vllm))
 * Flash-Attention ([https://github.com/Dao-AILab/flash-attention](https://github.com/Dao-AILab/flash-attention))
+
+---
+
+## ChatTS Design
+![image](figures/model_structure.png)
+ChatTS is a TS-MLLM (Time Series Multimodal MLLM) built natively for Multivariate Time Series (MTS). ChatTS takes MTS and textual queries as input, first separating and processing each modality individually. The time series are split into fixed-size patches encoded via a time series encoder. The encoded time series patches are concatenated with text tokens at the token level based on their original input positions, preserving contextual relationships before being fed into the LLM for unified multimodal understanding and response generation.
+
+---
+
+## Evaluation
+![image](figures/evaluation.png)
+`ChatTS` achieves advantages over both text/vision (image)/agent-based LLMs, with up to 46–76% gains on categorical and 80–113% improvements on numerical alignment tasks compared with `GPT-4o`, while using much fewer tokens. With the native time series modality, ChatTS not only understands fine-grained temporal patterns more precisely, but also provides a far more efficient and scalable foundation for multimodal time-series analysis and reasoning.
 
 ---
 

@@ -2,7 +2,7 @@
 
 # ChatTS: Time Series LLM for Understanding and Reasoning
 
-[[🤗 **Web Demo**]](https://huggingface.co/spaces/xiezhe22/ChatTS) ·
+[[🌐 **Web Demo**]](https://huggingface.co/spaces/xiezhe22/ChatTS) ·
 [[🤗 **ChatTS-8B Model**]](https://huggingface.co/bytedance-research/ChatTS-8B) ·
 [[🤗 **ChatTS-14B Model**]](https://huggingface.co/bytedance-research/ChatTS-14B) ·
 [[📄 **Paper**]](https://www.vldb.org/pvldb/vol18/p2385-xie.pdf) ·
@@ -14,7 +14,8 @@
 
 </div>
 
-`ChatTS` is a Time Series Multimodal LLM (TS-MLLM) focused on **understanding** and **reasoning** over time series, just like vision/video/audio MLLMs, but **natively built for time series**. This repository provides code, datasets, and the **ChatTS-14B-0801** model (VLDB’25): *ChatTS: Aligning Time Series with LLMs via Synthetic Data for Enhanced Understanding and Reasoning*.
+This repository provides official implementation of ChatTS, along with the training datasets and checkpoints for *[VLDB’25] paper: ChatTS: Aligning Time Series with LLMs via Synthetic Data for Enhanced Understanding and Reasoning*.
+`ChatTS` is a Time Series Multimodal LLM (TS-MLLM) focused on **understanding** and **reasoning** over time series, just like vision/video/audio MLLMs, but **natively built for time series**. 
 
 ![Chat](figures/chat_example.png)
 
@@ -24,11 +25,11 @@ Check out the [Case Studies](#case-studies) section for more real-world applicat
 
 ## What ChatTS Does
 
-* ✅ **Native multivariate support:**
-  Works with multiple time series **of different lengths** and **flexible dimensionality** in one prompt.
-
 * ✅ **Conversational understanding + reasoning:**
   Interactively explore structure, changes, and relationships across series.
+
+* ✅ **Native multivariate support:**
+  Works with multiple time series **of different lengths** and **flexible dimensionality** in one prompt.
 
 * ✅ **Value-related QA:**
   ChatTS retains **raw numerical values** so the model can answer questions like
@@ -114,7 +115,7 @@ print(tokenizer.decode(outputs[0][len(inputs['input_ids'][0]):], skip_special_to
 Basic usage: Before loading with vLLM, **register ChatTS** with `chatts.vllm.chatts_vllm`:
 
 ```python
-# (IMPORTANT) Make sure to import this file in your script, before constructing LLM()
+# (IMPORTANT) Make sure to import chatts_vllm
 import chatts.vllm.chatts_vllm
 from vllm import LLM, SamplingParams
 
@@ -136,6 +137,8 @@ outputs = language_model.generate([{
   "multi_modal_data": {"timeseries": ts_list}
 }], sampling_params=SamplingParams(max_tokens=300))
 ```
+
+**Note:** If you encounter problems when starting multiple workers with `vllm`, remember to use the environment variables: `VLLM_WORKER_MULTIPROC_METHOD=spawn VLLM_ALLOW_INSECURE_SERIALIZATION=1 python3 -m demo.demo_vllm`
 
 ### 5) OpenAI API-Compatible Server (vLLM)
 
@@ -223,7 +226,7 @@ Use **ChatTS-Training** (modified from LLaMA-Factory):
 * **vLLM Inference**:
 
 ```bash
-python3 -m chatts.utils.inference_tsmllm_vllm
+VLLM_WORKER_MULTIPROC_METHOD=spawn VLLM_ALLOW_INSECURE_SERIALIZATION=1 python3 -m chatts.utils.inference_tsmllm_vllm
 ```
 
 Outputs are written under `exp/`.
@@ -316,3 +319,7 @@ This project is licensed under the **MIT License** (see `LICENSE`).
   year={2025}
 }
 ```
+
+---
+
+Please kindly give us a Star 🌟 if you like this repo!

@@ -15,7 +15,7 @@
 # Note: You have to install `vllm==0.8.5`.
 # Note: This is a beta version, which may change in the future.
 # Note: `chatts.vllm.chatts_vllm` has to be imported here first as it will register the custom ChatTS module and the multimodal processor.
-# Note: Usage: `python3 -m chatts.utils.inference_tsmllm_vllm`
+# Note: Usage: `VLLM_WORKER_MULTIPROC_METHOD=spawn VLLM_ALLOW_INSECURE_SERIALIZATION=1 python3 -m chatts.utils.inference_tsmllm_vllm`
 
 # [Important Note] This script is still under development and may not work as expected.
 

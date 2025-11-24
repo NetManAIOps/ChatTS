@@ -31,16 +31,25 @@ from vllm.model_executor.models.utils import (AutoWeightsLoader, WeightsMapper,
                                               init_vllm_registered_model,
                                               maybe_prefix,
                                               merge_multimodal_embeddings)
-from vllm.model_executor.sampling_metadata import SamplingMetadata
+try:
+    from vllm.model_executor.sampling_metadata import SamplingMetadata
+except ImportError:
+    SamplingMetadata = None
+
 from vllm.multimodal import MULTIMODAL_REGISTRY
 from vllm.multimodal.inputs import NestedTensors
 from vllm.multimodal.parse import MultiModalDataParser, ProcessorBatchItems, EmbeddingItems
+from vllm.model_executor.layers.logits_processor import LogitsProcessor
 from vllm.multimodal.processing import (BaseMultiModalProcessor,
                                         BaseProcessingInfo, MultiModalDataDict,
                                         MultiModalDataItems,
-                                        MultiModalFieldConfig,
-                                        MultiModalKwargs, PromptReplacement,
+                                        MultiModalFieldConfig, PromptReplacement,
                                         PromptUpdateDetails)
+try:
+    from vllm.multimodal.processing import MultiModalKwargs
+except ImportError:
+    MultiModalKwargs = None
+
 from vllm.multimodal.profiling import BaseDummyInputsBuilder
 from vllm.sequence import IntermediateTensors
 from vllm.utils import is_list_of
@@ -312,6 +321,7 @@ class Qwen2TSMultiModalProcessor(BaseMultiModalProcessor[Qwen2TSProcessingInfo]
         prompt: str,
         mm_data: Mapping[str, object],
         mm_kwargs: Mapping[str, object],
+        tok_kwargs: Mapping[str, object]={},
     ) -> BatchFeature:
         mm_data = dict(mm_data)
         ts = mm_data.pop("timeseries", [])
@@ -321,11 +331,19 @@ class Qwen2TSMultiModalProcessor(BaseMultiModalProcessor[Qwen2TSProcessingInfo]
 
         mm_kwargs = dict(mm_kwargs)
         mm_kwargs['vllm_flag'] = True
-        result = super()._call_hf_processor(
-            prompt=prompt,
-            mm_data=mm_data,
-            mm_kwargs=mm_kwargs,
-        )
+        try:
+            result = super()._call_hf_processor(
+                prompt=prompt,
+                mm_data=mm_data,
+                mm_kwargs=mm_kwargs,
+                tok_kwargs=tok_kwargs,
+            )
+        except TypeError:
+            result = super()._call_hf_processor(
+                prompt=prompt,
+                mm_data=mm_data,
+                mm_kwargs=mm_kwargs,
+            )
 
         return result
 
@@ -344,6 +362,7 @@ class Qwen2TSMultiModalProcessor(BaseMultiModalProcessor[Qwen2TSProcessingInfo]
         prompt_text: str,
         mm_items: MultiModalDataItems,
         hf_processor_mm_kwargs: Mapping[str, object],
+        tokenization_kwargs: Mapping[str, object]={},
     ) -> bool:
         return False
 
@@ -351,7 +370,7 @@ class Qwen2TSMultiModalProcessor(BaseMultiModalProcessor[Qwen2TSProcessingInfo]
         self,
         mm_items: MultiModalDataItems,
         hf_processor_mm_kwargs: Mapping[str, object],
-        out_mm_kwargs: MultiModalKwargs,
+        out_mm_kwargs,
     ) -> list[PromptReplacement]:
         hf_config = self.info.get_hf_config()
         placeholder = hf_config.ts_token_start_index
@@ -362,33 +381,59 @@ class Qwen2TSMultiModalProcessor(BaseMultiModalProcessor[Qwen2TSProcessingInfo]
         if 'timeseries' not in out_mm_kwargs:
             return []
 
-        # ChatTS processor returns a list of tuples
-        # (ts_tokens, encoded_ts_arrays)
-        ts_tokens, encoded_ts_arrays = zip(*out_mm_kwargs["timeseries"])
-
-        # patch_cnt = get_patch_cnt(concatenated_ts, hf_config.ts)
         patch_size = hf_config.ts['patch_size']
-        # encoded_ts_arrays: list[torch.Tensor]
-        # encoded_ts_arrays[i].shape: (num_rows, num_elements*2, num_features)
-        # num_elements*2 is used because each element is a pair of (value, mask)
-        patch_cnt = [
-            (encoded_ts_arrays[i].shape[1] // 2 + patch_size - 1) // patch_size
-            for i in range(len(encoded_ts_arrays))
-        ]
+        
+        # Check if we are using the new structure (list of items with .data) or old structure (list of tuples)
+        ts_data = out_mm_kwargs["timeseries"]
+        is_new_structure = False
+        if len(ts_data) > 0:
+            first_item = ts_data[0]
+            # In new structure, items are usually dict-like or objects where we access ["timeseries"]
+            # In old structure, items are tuples (ts_tokens, encoded_ts_arrays)
+            if not isinstance(first_item, (list, tuple)):
+                 is_new_structure = True
 
-        def get_replacement_qwen2_ts(item_idx: int):
-            # Use the pre-tokenized replacements
-            tokens = ts_tokens[item_idx].copy()
-            # Extend the tokens with placeholders to match the patch_cnt
-            num_placeholders = sum(1 for t in tokens if t == placeholder)
-            if num_placeholders < patch_cnt[item_idx]:
-                tokens.extend([placeholder] *
-                              (patch_cnt[item_idx] - num_placeholders))
-            # return tokens
-            return PromptUpdateDetails.select_token_id(
-                tokens,
-                embed_token_id=placeholder,
-            )
+        if is_new_structure:
+            def get_replacement_qwen2_ts(item_idx: int):
+                # Get out item of the current modality
+                out_item = out_mm_kwargs["timeseries"][item_idx]
+                # print(f"{out_item['timeseries'].data=}")
+                ts_tokens, encoded_ts_arrays = out_item["timeseries"].data
+                patch_cnt = (encoded_ts_arrays.shape[1] // 2 + patch_size - 1) // patch_size
+
+                # Use the pre-tokenized replacements
+                tokens = ts_tokens.copy()
+                # Extend the tokens with placeholders to match the patch_cnt
+                num_placeholders = sum(1 for t in tokens if t == placeholder)
+                if num_placeholders < patch_cnt:
+                    tokens.extend([placeholder] *
+                                  (patch_cnt - num_placeholders))
+                # return tokens
+                return PromptUpdateDetails.select_token_id(
+                    tokens,
+                    embed_token_id=placeholder,
+                )
+        else:
+            # Old structure
+            ts_tokens, encoded_ts_arrays = zip(*out_mm_kwargs["timeseries"])
+            patch_cnt = [
+                (encoded_ts_arrays[i].shape[1] // 2 + patch_size - 1) // patch_size
+                for i in range(len(encoded_ts_arrays))
+            ]
+
+            def get_replacement_qwen2_ts(item_idx: int):
+                # Use the pre-tokenized replacements
+                tokens = ts_tokens[item_idx].copy()
+                # Extend the tokens with placeholders to match the patch_cnt
+                num_placeholders = sum(1 for t in tokens if t == placeholder)
+                if num_placeholders < patch_cnt[item_idx]:
+                    tokens.extend([placeholder] *
+                                  (patch_cnt[item_idx] - num_placeholders))
+                # return tokens
+                return PromptUpdateDetails.select_token_id(
+                    tokens,
+                    embed_token_id=placeholder,
+                )
 
         return [
             PromptReplacement(
@@ -556,10 +601,13 @@ class Qwen2TSForCausalLM(nn.Module, SupportsMultiModal, SupportsPP,
     def compute_logits(
         self,
         hidden_states: torch.Tensor,
-        sampling_metadata: SamplingMetadata,
+        sampling_metadata: Optional[object] = None,
     ) -> Optional[torch.Tensor]:
-        return self.language_model.compute_logits(hidden_states,
-                                                  sampling_metadata)
+        try:
+            return self.language_model.compute_logits(hidden_states,
+                                                      sampling_metadata)
+        except TypeError:
+            return self.language_model.compute_logits(hidden_states)
 
     def load_weights(self, weights: Iterable[tuple[str,
                                                    torch.Tensor]]) -> set[str]:
@@ -734,10 +782,13 @@ class Qwen3TSForCausalLM(nn.Module, SupportsMultiModal, SupportsPP,
     def compute_logits(
         self,
         hidden_states: torch.Tensor,
-        sampling_metadata: SamplingMetadata,
+        sampling_metadata: Optional[object] = None,
     ) -> Optional[torch.Tensor]:
-        return self.language_model.compute_logits(hidden_states,
-                                                  sampling_metadata)
+        try:
+            return self.language_model.compute_logits(hidden_states,
+                                                      sampling_metadata)
+        except TypeError:
+            return self.language_model.compute_logits(hidden_states)
 
     def load_weights(self, weights: Iterable[tuple[str,
                                                    torch.Tensor]]) -> set[str]:

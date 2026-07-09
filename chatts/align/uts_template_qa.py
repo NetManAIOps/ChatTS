@@ -34,6 +34,10 @@ OUTPUT_PATH = f'{OUTPUT_BASE_DIR}/uts_template_{SEQ_LEN}_{NUM_DATA}_{ENCODING_ME
 DISABLE_EXTREME_LENGTHS = yaml.safe_load(open("config/datagen_config.yaml"))["disable_extreme_lengths"]
 
 
+def clamp_raw_point(point: int, seq_len: int) -> int:
+    return max(0, min(int(point), seq_len - 1))
+
+
 def attribute_pool_to_json(attribute_pool: dict) -> str:
     result = copy.deepcopy(attribute_pool)
     for i in range(len(result['local'])):
@@ -82,7 +86,7 @@ def generate_single_dataset():
 
     # (Step 3) generate the reason of each change
     for local_char in attribute_pool['local']:
-        question_position = local_char['position_start'] + random.randint(-5, 5)
+        question_position = clamp_raw_point(local_char['position_start'] + random.randint(-5, 5), current_seq_len)
         questions.append(f"Is there a local characteristic fluctuation starting around point {question_position} in this time series?")
         answers.append(f"Yes, this time series " + local_char['detail'])
 

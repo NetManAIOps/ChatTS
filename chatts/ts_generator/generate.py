@@ -81,6 +81,15 @@ all_attribute_set = {
     }
 }
 
+
+def _clamp_raw_point(point: int, seq_len: int) -> int:
+    return max(0, min(int(point), seq_len - 1))
+
+
+def _inclusive_segment_end(exclusive_end: int, seq_len: int) -> int:
+    return _clamp_raw_point(int(exclusive_end) - 1, seq_len)
+
+
 def generate_random_attributes(overall_attribute: Dict[str, Dict[str, float]] = all_attribute_set["overall_attribute"], change_attribute: Dict[str, float] = all_attribute_set["change"], change_positions: Optional[List[Tuple[Optional[int], Optional[float]]]] = None, seq_len: int = 512):
     if change_positions is None:
         change_positions = [(None, None) for _ in range(random.randint(0, 3))]
@@ -305,15 +314,16 @@ def generate_noise(attribute_pool, y, overall_amplitude, seq_len):
             for i in range(num_noise_segments):
                 noise_start = noise_segments[i]
                 noise_end = noise_segments[i + 1]
+                noise_public_end = _inclusive_segment_end(noise_end, seq_len)
                 noise_std_amp = np.random.uniform(0.1, 5.0)
                 noise[noise_start:noise_end] *= noise_std_amp
                 attribute_pool["noise"]["segments"].append({
                     "position_start": noise_start,
-                    "position_end": noise_end,
+                    "position_end": noise_public_end,
                     "amplitude": round(noise_std_amp * std, 2),
-                    "description": f"the noise std is {noise_std_amp * std:.2f} between point {noise_start} and point {noise_end}"
+                    "description": f"the noise std is {noise_std_amp * std:.2f} between point {noise_start} and point {noise_public_end}"
                 })
-                attribute_pool["noise"]["detail"] += f"the noise std is {noise_std_amp * std:.2f} between point {noise_start} and point {noise_end}, "
+                attribute_pool["noise"]["detail"] += f"the noise std is {noise_std_amp * std:.2f} between point {noise_start} and point {noise_public_end}, "
             attribute_pool["noise"]["detail"] = attribute_pool["noise"]["detail"][:-2] + ". "
         else:
             noise_std_amp = np.random.uniform(0.1, 5.0)
@@ -356,13 +366,14 @@ def generate_seasonal(attribute_pool, overall_amplitude, seq_len):
             attribute_pool["seasonal"]['detail'] = f"The time series is showing {attribute_pool['seasonal']['type']}: "
             attribute_pool["seasonal"]["segments"] = []
             for i in range(len(amp)):
+                seasonal_public_end = _inclusive_segment_end(split_points[i + 1], seq_len)
                 attribute_pool["seasonal"]["segments"].append({
                     "amplitude": round(amp[i], 2),
                     "position_start": split_points[i],
-                    "position_end": split_points[i + 1],
-                    "description": f"the amplitude of the periodic fluctuation is {amp[i]:.1f} between point {split_points[i]} and point {split_points[i + 1]}"
+                    "position_end": seasonal_public_end,
+                    "description": f"the amplitude of the periodic fluctuation is {amp[i]:.1f} between point {split_points[i]} and point {seasonal_public_end}"
                 })
-                attribute_pool["seasonal"]['detail'] += f"the amplitude of the periodic fluctuation is {amp[i]:.1f} between point {split_points[i]} and point {split_points[i + 1]}, "
+                attribute_pool["seasonal"]['detail'] += f"the amplitude of the periodic fluctuation is {amp[i]:.1f} between point {split_points[i]} and point {seasonal_public_end}, "
             attribute_pool["seasonal"]['detail'] = attribute_pool["seasonal"]['detail'][:-2] + ". "
         elif attribute_pool["seasonal"]['type'] == "no periodic fluctuation":
             y += 0.0
@@ -523,12 +534,12 @@ def generate_time_series(attribute_pool, seq_len=512):
 
     # Replace detail in local_chars
     for local_char in attribute_pool["local"]:
-        pattern = re.compile(r'<\|(\d+)\|>')
+        pattern = re.compile(r'<\|(-?\d+)\|>')
 
         def replacer(match):
             n = int(match.group(1))
             if n < 0 or n >= seq_len:
-                print(local_char["detail"], seq_len)
+                raise ValueError(f"Invalid point placeholder <|{n}|> for sequence length {seq_len}: {local_char['detail']}")
             return f"{y[n]:.2f}"
         local_char['detail'] = pattern.sub(replacer, local_char['detail'])
 

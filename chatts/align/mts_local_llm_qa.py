@@ -202,7 +202,7 @@ def generate_prompt_data(seq_len: int=256):
             if len(candidate_clusters) == 0:
                 continue
             current_cluster = random.choice(candidate_clusters)
-            candidate_metrics = list(set(cluster[current_cluster]) - visited_metrics)
+            candidate_metrics = sorted(set(cluster[current_cluster]) - visited_metrics)
             cur_positive_metrics = list(np.random.choice(candidate_metrics, size=random.randint(2, len(candidate_metrics)), replace=False))
             visited_clusters.add(current_cluster)
             visited_metrics.update(cur_positive_metrics)
@@ -249,12 +249,18 @@ def generate_prompt_data(seq_len: int=256):
     combined_attributes = [combined_attributes[i] for i in shuffle_indices]
     combined_metrics = [combined_metrics[i] for i in shuffle_indices]
     combined_cluster_idx = [combined_cluster_idx[i] for i in shuffle_indices]
+    positive_indices_by_cluster = {
+        cluster_idx: [idx for idx, item_cluster_idx in enumerate(combined_cluster_idx) if item_cluster_idx == cluster_idx]
+        for cluster_idx in range(len(positive_cluster))
+    }
+    negative_indicies = [idx for idx, item_cluster_idx in enumerate(combined_cluster_idx) if item_cluster_idx is None]
 
     label = {
         'timeseries': [i.tolist() for i in combined_timeseries],
         'label': {
             'clusters': [],
             'position': int(positive_change_position_list[0]),
+            'positions': [int(position) for position in positive_change_position_list],
             'correlations': [],
             'cols': combined_metrics,
             'situation': situation
@@ -270,6 +276,7 @@ def generate_prompt_data(seq_len: int=256):
     fields_list = []
     corr_pool_list = [None] * len(shuffle_indices)
     original_timeseries = copy.deepcopy(combined_timeseries)
+    emitted_cluster_labels = set()
 
     for i in range(len(shuffle_indices)):
         # Scalar
@@ -281,8 +288,9 @@ def generate_prompt_data(seq_len: int=256):
 
         # Generate QAs
         # (Task 1) Describe two time series
-        cur_positive_idx = 0
-        positive_indicies = [i for i in range(len(combined_metrics)) if combined_metrics[i] in positive_cluster[cur_positive_idx]]
+        cur_positive_idx = combined_cluster_idx[i] if combined_cluster_idx[i] is not None else 0
+        positive_indicies = positive_indices_by_cluster[cur_positive_idx]
+        positive_change_position = positive_change_position_list[cur_positive_idx]
         
         for j in range(len(shuffle_indices)):
             # Control the number
@@ -290,8 +298,6 @@ def generate_prompt_data(seq_len: int=256):
                 continue
             if i == j:
                 continue
-            # Random select a positive change position
-            positive_change_position = positive_change_position_list[cur_positive_idx]
             question_list.append(f"Based on the characteristics of the time series, please describe the characteristics of {combined_metrics[i]} and {combined_metrics[j]} from the aspects of periodicity, trend, local characteristics, frequency characteristics, and noise. And analyze whether there may be a correlation of fluctuation between them around point {positive_change_position}. Conclude the physical meaning of the fluctuation correlation (or no correlation) in one sentence.")
             fields_list.append({
                 "local": [i, j],
@@ -306,6 +312,7 @@ def generate_prompt_data(seq_len: int=256):
                 cur_answer += f" Both metrics show sudden changes around point {positive_change_position}, indicating a possible correlation in terms of fluctuation. <|prompt{all_prompt_idx}|>"
                 label["label"]["correlations"].append({
                     "pair": [combined_metrics[i], combined_metrics[j]],
+                    "position": int(positive_change_position),
                     "explain": f"<|prompt{all_prompt_idx}|>",
                     "label": True
                 })
@@ -319,6 +326,7 @@ def generate_prompt_data(seq_len: int=256):
                 cur_answer += f" No. Both metrics show sudden changes around point {positive_change_position_list[combined_cluster_idx[i]]}, but no sudden changes around point {positive_change_position}. <|prompt{all_prompt_idx}|>"
                 label["label"]["correlations"].append({
                     "pair": [combined_metrics[i], combined_metrics[j]],
+                    "position": int(positive_change_position),
                     "explain": f"<|prompt{all_prompt_idx}|>",
                     "label": False
                 })
@@ -331,6 +339,7 @@ def generate_prompt_data(seq_len: int=256):
                 cur_answer += f" These two time series do not seem to have much correlation in terms of fluctuation around point {positive_change_position}. <|prompt{all_prompt_idx}|>"
                 label["label"]["correlations"].append({
                     "pair": [combined_metrics[i], combined_metrics[j]],
+                    "position": int(positive_change_position),
                     "explain": f"<|prompt{all_prompt_idx}|>",
                     "label": False
                 })
@@ -345,6 +354,7 @@ def generate_prompt_data(seq_len: int=256):
                 cur_answer += f" These two time series do not seem to have much correlation in terms of fluctuation around point {positive_change_position}. <|prompt{all_prompt_idx}|>"
                 label["label"]["correlations"].append({
                     "pair": [combined_metrics[i], combined_metrics[j]],
+                    "position": int(positive_change_position),
                     "explain": f"<|prompt{all_prompt_idx}|>",
                     "label": False
                 })
@@ -355,7 +365,6 @@ def generate_prompt_data(seq_len: int=256):
         
         # (Task 3) Find similar time series
         question_list.append(f"Based on the fluctuations in the metrics around point {positive_change_position}, please find other metric(s) that may be related to {combined_metrics[i]}, output their numbers, and explain the reasons. If related metrics are found, explain why they have similar local fluctuations considering their physical meaning in one sentence. If no related metrics are found, output that no related metrics were found.")
-        negative_indicies = [i for i in range(len(combined_cluster_idx)) if combined_cluster_idx[i] is None]
         if i in negative_indicies:
             cur_answer = f"Among these metrics, I did not find any other metrics that may be related to {combined_metrics[i]} in terms of fluctuation around point {positive_change_position}. It seems that {combined_metrics[i]} shows no significant fluctuation around this point."
             fields_list.append({
@@ -387,16 +396,20 @@ def generate_prompt_data(seq_len: int=256):
             })
             corr_pool_list[i] = [[j for j in positive_indicies], cur_answer]
 
-            if len(label["label"]["clusters"]) == 0:
+            if cur_positive_idx not in emitted_cluster_labels:
                 label["label"]["clusters"].append({
+                    'cluster_idx': int(cur_positive_idx),
+                    'position': int(positive_change_position),
                     'col_idx': [[int(j), combined_attributes[j]['local'][0]['type']] for j in positive_indicies],
                     'cols': [combined_metrics[j] for j in positive_indicies],
                     'explain': f"<|prompt{all_prompt_idx}|>",
                 })
+                emitted_cluster_labels.add(cur_positive_idx)
 
             all_prompt_idx += 1
             llm_prompt_list.append([f"In a {situation} system, there are many monitoring metrics. Near a timestamp (maybe during a failure), we found there are fluctuations in " + ', '.join(combined_metrics[j] for j in positive_indicies) + f". Please explain their relationship in physical meaning and simply describe what's may happening in the {situation} system in English in 1 sentence, like `these metrics are all xxx-related or xxx. {situation} may xxx.` (the format may be different, but keep simple): "])
         answer_list.append(cur_answer)
+    label["label"]["clusters"].sort(key=lambda item: item["cluster_idx"])
     return original_timeseries, combined_timeseries, combined_metrics, combined_attributes, prompt, question_list, answer_list, llm_prompt_list, fields_list, corr_pool_list, label
 
 def generate_dataset():

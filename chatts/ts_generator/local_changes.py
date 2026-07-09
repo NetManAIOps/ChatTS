@@ -26,6 +26,22 @@ ENABLE_DROP_PROMPT = yaml.safe_load(open("config/datagen_config.yaml"))["enable_
 LOCAL_CHANGE_VERBOSE = yaml.safe_load(open("config/datagen_config.yaml"))["local_change_verbose"]
 
 
+def _clamp_raw_point(point: int, seq_len: int) -> int:
+    return max(0, min(int(point), seq_len - 1))
+
+
+def _previous_raw_point(point: int) -> int:
+    return max(0, int(point) - 1)
+
+
+def _inclusive_end_point(exclusive_end: int, seq_len: int) -> int:
+    return _clamp_raw_point(int(exclusive_end) - 1, seq_len)
+
+
+def _value_ref(point: int, seq_len: int) -> str:
+    return f"<|{_clamp_raw_point(point, seq_len)}|>"
+
+
 class BaseChange:
     """Base class for all local changes in time series"""
     
@@ -48,11 +64,15 @@ class BaseChange:
     
     def set_position_if_none(self, seq_len: int, existing_objs: List['BaseChange']):
         """Set position if not provided, ensuring minimum length requirement"""
+        min_length = self.get_min_length()
+        max_start_pos = seq_len - min_length
+        if max_start_pos < 0:
+            raise KeyError(f"Cannot set position for {self.change_type} with sequence length {seq_len} as it is shorter than minimum length {min_length}.")
+        if self.position_start is not None:
+            self.position_start = max(0, min(int(self.position_start), max_start_pos))
+            return
+
         if self.position_start is None:
-            min_length = self.get_min_length()
-            max_start_pos = seq_len - min_length
-            if max_start_pos < 0:
-                raise KeyError(f"Cannot set position for {self.change_type} with sequence length {seq_len} as it is shorter than minimum length {min_length}.")
             min_interval = max(seq_len / 8, min_length, 20)
 
             cnt = 0
@@ -80,7 +100,7 @@ class BaseChange:
 
     def get_remaining_length(self, seq_len: int) -> int:
         """Get remaining length from current position to end of sequence"""
-        return seq_len - self.position_start - 1
+        return seq_len - self.position_start
     
     def set_amplitude_if_none(self, overall_amplitude: float, base_factor: float = 0.8, variance: float = 2.0):
         """Set amplitude if not provided"""
@@ -108,7 +128,8 @@ class ShakeChange(BaseChange):
         
         y[peak_start:peak_start + peak_length] += func()
         self.position_end = peak_start + peak_length
-        self.detail = f"shake with an amplitude of about {self.amplitude:.2f} occurred between point {peak_start} and point {self.position_end}"
+        peak_end = _inclusive_end_point(self.position_end, seq_len)
+        self.detail = f"shake with an amplitude of about {self.amplitude:.2f} occurred between point {peak_start} and point {peak_end}"
         
         return y
 
@@ -119,12 +140,13 @@ class SpikeChange(BaseChange):
     def get_min_length(self) -> int:
         return 3
     
-    def _generate_spike_detail(self, peak_start: int, peak_end: int, spike_top_idx: int, direction: str):
+    def _generate_spike_detail(self, peak_start: int, peak_end: int, spike_top_idx: int, direction: str, seq_len: int):
         """Generate detail description for spike"""
+        public_peak_end = _inclusive_end_point(peak_end, seq_len)
         if direction == "upward":
-            self.detail = f"an upward spike with an amplitude of {self.amplitude:.2f} occurred between point {peak_start} and point {peak_end}, with the time series value rapidly rising from around <|{peak_start}|> to around <|{spike_top_idx}|> and then quickly falling back to around <|{peak_end}|>"
+            self.detail = f"an upward spike with an amplitude of {self.amplitude:.2f} occurred between point {peak_start} and point {public_peak_end}, with the time series value rapidly rising from around {_value_ref(peak_start, seq_len)} to around {_value_ref(spike_top_idx, seq_len)} and then quickly falling back to around {_value_ref(public_peak_end, seq_len)}"
         else:
-            self.detail = f"a downward spike with an amplitude of {self.amplitude:.2f} occurred between point {peak_start} and point {peak_end}, with the time series value rapidly falling from around <|{peak_start}|> to around <|{spike_top_idx}|> and then quickly rising back to around <|{peak_end}|>"
+            self.detail = f"a downward spike with an amplitude of {self.amplitude:.2f} occurred between point {peak_start} and point {public_peak_end}, with the time series value rapidly falling from around {_value_ref(peak_start, seq_len)} to around {_value_ref(spike_top_idx, seq_len)} and then quickly rising back to around {_value_ref(public_peak_end, seq_len)}"
 
 
 class UpwardSpikeChange(SpikeChange):
@@ -141,7 +163,7 @@ class UpwardSpikeChange(SpikeChange):
         y[peak_start:peak_start + actual_length] += spike[:actual_length]
         spike_top_idx = peak_start + np.argmax(np.abs(spike[:actual_length]))
         self.position_end = peak_start + actual_length
-        self._generate_spike_detail(peak_start, self.position_end, spike_top_idx, "upward")
+        self._generate_spike_detail(peak_start, self.position_end, spike_top_idx, "upward", seq_len)
         
         return y
 
@@ -160,7 +182,7 @@ class DownwardSpikeChange(SpikeChange):
         y[peak_start:peak_start + actual_length] += spike[:actual_length]
         spike_top_idx = peak_start + np.argmax(np.abs(spike[:actual_length]))
         self.position_end = peak_start + actual_length
-        self._generate_spike_detail(peak_start, self.position_end, spike_top_idx, "downward")
+        self._generate_spike_detail(peak_start, self.position_end, spike_top_idx, "downward", seq_len)
         
         return y
 
@@ -202,8 +224,9 @@ class ContinuousSpikeChange(BaseChange):
         
         direction_word = "upward" if direction > 0 else "downward"
         action_word = "rising" if direction > 0 else "falling"
+        public_end = _inclusive_end_point(current_pos, seq_len)
         
-        self.detail = f"at {' and '.join(peaks)}, there were {len(all_amplitudes)} consecutive {direction_word} spikes with amplitudes ranging from {min(all_amplitudes):.2f} to {max(all_amplitudes):.2f}, with the time series value repeatedly {action_word} sharply from around <|{self.position_start}|> to around <|" + '|> and <|'.join(map(str, spike_top_ids)) + f"|>, and then quickly falling back to around <|{current_pos}|>"
+        self.detail = f"at {' and '.join(peaks)}, there were {len(all_amplitudes)} consecutive {direction_word} spikes with amplitudes ranging from {min(all_amplitudes):.2f} to {max(all_amplitudes):.2f}, with the time series value repeatedly {action_word} sharply from around {_value_ref(self.position_start, seq_len)} to around " + ' and '.join(_value_ref(i, seq_len) for i in spike_top_ids) + f", and then quickly falling back to around {_value_ref(public_end, seq_len)}"
         
         return y
 
@@ -257,8 +280,9 @@ class ConvexChange(BaseChange):
         
         direction_word = "upward" if direction > 0 else "downward"
         action_words = ("rises", "falls") if direction > 0 else ("falls", "rises")
+        public_end = _inclusive_end_point(self.position_end, seq_len)
         
-        self.detail = f"starting from point {convex_start}, the time series value {action_words[0]} from around <|{convex_start}|> to around <|{convex_start + start_length}|>, forms a {direction_word} convex with an amplitude of about {self.amplitude:.2f}, and then {action_words[1]} back to around <|{self.position_end}|>"
+        self.detail = f"starting from point {convex_start}, the time series value {action_words[0]} from around {_value_ref(convex_start, seq_len)} to around {_value_ref(convex_start + start_length - 1, seq_len)}, forms a {direction_word} convex with an amplitude of about {self.amplitude:.2f}, and then {action_words[1]} back to around {_value_ref(public_end, seq_len)}"
         
         return y
 
@@ -296,8 +320,10 @@ class SuddenChange(BaseChange):
         
         action_word = "increase" if direction > 0 else "decrease"
         movement_word = "rising" if direction > 0 else "falling"
+        public_end = _inclusive_end_point(self.position_end, seq_len)
+        start_value_point = _previous_raw_point(self.position_start)
         
-        self.detail = f"a sudden {action_word} with an amplitude of {self.amplitude:.2f} occurred between point {self.position_start} and point {self.position_end}, with the time series value {movement_word} from around <|{self.position_start - 1}|> to around <|{self.position_end}|>"
+        self.detail = f"a sudden {action_word} with an amplitude of {self.amplitude:.2f} occurred between point {self.position_start} and point {public_end}, with the time series value {movement_word} from around {_value_ref(start_value_point, seq_len)} to around {_value_ref(public_end, seq_len)}"
         
         # Add recovery with some probability
         if random.random() < 0.5:
@@ -310,7 +336,9 @@ class SuddenChange(BaseChange):
                 if ENABLE_DROP_PROMPT:
                     recovery_word = "drop" if direction > 0 else "rise"
                     recovery_movement = "falling" if direction > 0 else "rising"
-                    self.detail += f", then a {recovery_word} with an amplitude of {recover_amplitude:.2f} occurred between point {self.position_start + drop_length} and point {self.position_start + drop_length + recover_length}, with the time series value {recovery_movement} back to around <|{self.position_start + drop_length + recover_length + 1}|>"
+                    recovery_start = self.position_start + drop_length
+                    recovery_end = _inclusive_end_point(recovery_start + recover_length, seq_len)
+                    self.detail += f", then a {recovery_word} with an amplitude of {recover_amplitude:.2f} occurred between point {recovery_start} and point {recovery_end}, with the time series value {recovery_movement} back to around {_value_ref(recovery_end, seq_len)}"
         
         return y
 
@@ -352,10 +380,12 @@ class RapidRiseSlowDeclineChange(TwoPhaseChange):
         y[self.position_start + rise_length:self.position_start + rise_length + fall_length] += generate_ts_change(fall_length, -self.amplitude) + self.amplitude
         
         self.position_end = self.position_start + rise_length + fall_length
+        rise_end = _inclusive_end_point(self.position_start + rise_length, seq_len)
+        public_end = _inclusive_end_point(self.position_end, seq_len)
         self.detail = (
-            f"a rapid rise with an amplitude of {self.amplitude:.2f} occurred between point {self.position_start} and point {self.position_start + rise_length}, "
-            f"with the time series value rising from around <|{self.position_start - 1}|> to around <|{self.position_start + rise_length}|>, "
-            f"followed by a slow decline between point {self.position_start + rise_length} and point {self.position_end} back to around <|{self.position_end}|>"
+            f"a rapid rise with an amplitude of {self.amplitude:.2f} occurred between point {self.position_start} and point {rise_end}, "
+            f"with the time series value rising from around {_value_ref(_previous_raw_point(self.position_start), seq_len)} to around {_value_ref(rise_end, seq_len)}, "
+            f"followed by a slow decline between point {self.position_start + rise_length} and point {public_end} back to around {_value_ref(public_end, seq_len)}"
         )
         
         return y
@@ -375,9 +405,11 @@ class SlowRiseRapidDeclineChange(TwoPhaseChange):
         y[self.position_start + rise_length:self.position_start + rise_length + fall_length] += generate_ts_change(fall_length, -self.amplitude) + self.amplitude
         
         self.position_end = self.position_start + rise_length + fall_length
+        rise_end = _inclusive_end_point(self.position_start + rise_length, seq_len)
+        public_end = _inclusive_end_point(self.position_end, seq_len)
         self.detail = (
             f"starting from point {self.position_start}, the time series value slowly rises, "
-            f"reaching a peak at point {self.position_start + rise_length}, followed by a rapid decline between point {self.position_start + rise_length} and point {self.position_end} back to around <|{self.position_end}|>"
+            f"reaching a peak at point {rise_end}, followed by a rapid decline between point {self.position_start + rise_length} and point {public_end} back to around {_value_ref(public_end, seq_len)}"
         )
         
         return y
@@ -397,10 +429,12 @@ class RapidDeclineSlowRiseChange(TwoPhaseChange):
         y[self.position_start + drop_length:self.position_start + drop_length + rise_length] += generate_ts_change(rise_length, self.amplitude) - self.amplitude
         
         self.position_end = self.position_start + drop_length + rise_length
+        drop_end = _inclusive_end_point(self.position_start + drop_length, seq_len)
+        public_end = _inclusive_end_point(self.position_end, seq_len)
         self.detail = (
-            f"a rapid decline with an amplitude of {self.amplitude:.2f} occurred between point {self.position_start} and point {self.position_start + drop_length}, "
-            f"with the time series value falling from around <|{self.position_start - 1}|> to around <|{self.position_start + drop_length}|>, "
-            f"followed by a slow rise between point {self.position_start + drop_length} and point {self.position_end} back to around <|{self.position_end}|>"
+            f"a rapid decline with an amplitude of {self.amplitude:.2f} occurred between point {self.position_start} and point {drop_end}, "
+            f"with the time series value falling from around {_value_ref(_previous_raw_point(self.position_start), seq_len)} to around {_value_ref(drop_end, seq_len)}, "
+            f"followed by a slow rise between point {self.position_start + drop_length} and point {public_end} back to around {_value_ref(public_end, seq_len)}"
         )
         
         return y
@@ -420,9 +454,11 @@ class SlowDeclineRapidRiseChange(TwoPhaseChange):
         y[self.position_start + drop_length:self.position_start + drop_length + rise_length] += generate_ts_change(rise_length, self.amplitude) - self.amplitude
         
         self.position_end = self.position_start + drop_length + rise_length
+        drop_end = _inclusive_end_point(self.position_start + drop_length, seq_len)
+        public_end = _inclusive_end_point(self.position_end, seq_len)
         self.detail = (
             f"starting from point {self.position_start}, the time series value slowly declines, "
-            f"reaching a low point at point {self.position_start + drop_length}, followed by a rapid rise between point {self.position_start + drop_length} and point {self.position_end} back to around <|{self.position_end}|>"
+            f"reaching a low point at point {drop_end}, followed by a rapid rise between point {self.position_start + drop_length} and point {public_end} back to around {_value_ref(public_end, seq_len)}"
         )
         
         return y
@@ -455,10 +491,12 @@ class DecreaseAfterUpwardSpikeChange(SpikeFollowedByChange):
         y[peak_start + peak_length + fall_length:] -= fall_amplitude
         
         self.position_end = peak_start + peak_length + fall_length
+        peak_end = _inclusive_end_point(peak_start + peak_length, seq_len)
+        public_end = _inclusive_end_point(self.position_end, seq_len)
         self.detail = (
-            f"an upward spike with an amplitude of {self.amplitude:.2f} occurred between point {peak_start} and point {peak_start + peak_length}, "
-            f"with the time series value rapidly rising from around <|{peak_start - 1}|> to around <|{spike_top_idx}|> and quickly falling back, "
-            f"followed by a further decline between point {peak_start + peak_length} and point {self.position_end} to around <|{self.position_end}|>"
+            f"an upward spike with an amplitude of {self.amplitude:.2f} occurred between point {peak_start} and point {peak_end}, "
+            f"with the time series value rapidly rising from around {_value_ref(_previous_raw_point(peak_start), seq_len)} to around {_value_ref(spike_top_idx, seq_len)} and quickly falling back, "
+            f"followed by a further decline between point {peak_start + peak_length} and point {public_end} to around {_value_ref(public_end, seq_len)}"
         )
         
         return y
@@ -484,10 +522,12 @@ class IncreaseAfterDownwardSpikeChange(SpikeFollowedByChange):
         y[peak_start + peak_length + rise_length:] += rise_amplitude
         
         self.position_end = peak_start + peak_length + rise_length
+        peak_end = _inclusive_end_point(peak_start + peak_length, seq_len)
+        public_end = _inclusive_end_point(self.position_end, seq_len)
         self.detail = (
-            f"a downward spike with an amplitude of {self.amplitude:.2f} occurred between point {peak_start} and point {peak_start + peak_length}, "
-            f"with the time series value rapidly falling from around <|{peak_start}|> to around <|{spike_top_idx}|> and quickly rising back, "
-            f"followed by a further rise between point {peak_start + peak_length} and point {self.position_end} to around <|{self.position_end}|>"
+            f"a downward spike with an amplitude of {self.amplitude:.2f} occurred between point {peak_start} and point {peak_end}, "
+            f"with the time series value rapidly falling from around {_value_ref(peak_start, seq_len)} to around {_value_ref(spike_top_idx, seq_len)} and quickly rising back, "
+            f"followed by a further rise between point {peak_start + peak_length} and point {public_end} to around {_value_ref(public_end, seq_len)}"
         )
         
         return y
@@ -513,10 +553,12 @@ class IncreaseAfterUpwardSpikeChange(SpikeFollowedByChange):
         y[peak_start + peak_length + rise_length:] += rise_amplitude
         
         self.position_end = peak_start + peak_length + rise_length
+        peak_end = _inclusive_end_point(peak_start + peak_length, seq_len)
+        public_end = _inclusive_end_point(self.position_end, seq_len)
         self.detail = (
-            f"an upward spike with an amplitude of {self.amplitude:.2f} occurred between point {peak_start} and point {peak_start + peak_length}, "
-            f"with the time series value rapidly rising from around <|{peak_start - 1}|> to around <|{spike_top_idx}|> and quickly falling back, "
-            f"followed by a further rise between point {peak_start + peak_length} and point {self.position_end} to around <|{self.position_end}|>"
+            f"an upward spike with an amplitude of {self.amplitude:.2f} occurred between point {peak_start} and point {peak_end}, "
+            f"with the time series value rapidly rising from around {_value_ref(_previous_raw_point(peak_start), seq_len)} to around {_value_ref(spike_top_idx, seq_len)} and quickly falling back, "
+            f"followed by a further rise between point {peak_start + peak_length} and point {public_end} to around {_value_ref(public_end, seq_len)}"
         )
         
         return y
@@ -542,10 +584,12 @@ class DecreaseAfterDownwardSpikeChange(SpikeFollowedByChange):
         y[peak_start + peak_length + fall_length:] -= fall_amplitude
         
         self.position_end = peak_start + peak_length + fall_length
+        peak_end = _inclusive_end_point(peak_start + peak_length, seq_len)
+        public_end = _inclusive_end_point(self.position_end, seq_len)
         self.detail = (
-            f"a downward spike with an amplitude of {self.amplitude:.2f} occurred between point {peak_start} and point {peak_start + peak_length}, "
-            f"with the time series value rapidly falling from around <|{peak_start}|> to around <|{spike_top_idx}|> and quickly rising back, "
-            f"followed by a further decline between point {peak_start + peak_length} and point {self.position_end} to around <|{self.position_end}|>"
+            f"a downward spike with an amplitude of {self.amplitude:.2f} occurred between point {peak_start} and point {peak_end}, "
+            f"with the time series value rapidly falling from around {_value_ref(peak_start, seq_len)} to around {_value_ref(spike_top_idx, seq_len)} and quickly rising back, "
+            f"followed by a further decline between point {peak_start + peak_length} and point {public_end} to around {_value_ref(public_end, seq_len)}"
         )
         
         return y
@@ -579,10 +623,12 @@ class WideUpwardSpikeChange(WideSpikeChange):
         y[self.position_start + rise_length + peak_length:self.position_start + rise_length + peak_length + fall_length] += generate_ts_change(fall_length, -self.amplitude) + self.amplitude
         
         self.position_end = self.position_start + rise_length + peak_length + fall_length
+        rise_end = _inclusive_end_point(self.position_start + rise_length, seq_len)
+        public_end = _inclusive_end_point(self.position_end, seq_len)
         self.detail = (
-            f"a slow rise from around <|{self.position_start}|> to around <|{self.position_start + rise_length}|> occurred between point {self.position_start} and point {self.position_start + rise_length}, "
+            f"a slow rise from around {_value_ref(self.position_start, seq_len)} to around {_value_ref(rise_end, seq_len)} occurred between point {self.position_start} and point {rise_end}, "
             f"forming a short peak with an amplitude of {self.amplitude:.2f}, "
-            f"followed by a slow decline between point {self.position_start + rise_length + peak_length} and point {self.position_end} back to around <|{self.position_end}|>"
+            f"followed by a slow decline between point {self.position_start + rise_length + peak_length} and point {public_end} back to around {_value_ref(public_end, seq_len)}"
         )
         
         return y
@@ -609,10 +655,12 @@ class WideDownwardSpikeChange(WideSpikeChange):
         y[self.position_start + drop_length + peak_length:self.position_start + drop_length + peak_length + rise_length] += generate_ts_change(rise_length, self.amplitude) - self.amplitude
         
         self.position_end = self.position_start + drop_length + peak_length + rise_length
+        drop_end = _inclusive_end_point(self.position_start + drop_length, seq_len)
+        public_end = _inclusive_end_point(self.position_end, seq_len)
         self.detail = (
-            f"a slow decline from around <|{self.position_start}|> to around <|{self.position_start + drop_length}|> occurred between point {self.position_start} and point {self.position_start + drop_length}, "
+            f"a slow decline from around {_value_ref(self.position_start, seq_len)} to around {_value_ref(drop_end, seq_len)} occurred between point {self.position_start} and point {drop_end}, "
             f"forming a short trough with an amplitude of {self.amplitude:.2f}, "
-            f"followed by a slow rise between point {self.position_start + drop_length + peak_length} and point {self.position_end} back to around <|{self.position_end}|>"
+            f"followed by a slow rise between point {self.position_start + drop_length + peak_length} and point {public_end} back to around {_value_ref(public_end, seq_len)}"
         )
         
         return y
@@ -687,11 +735,11 @@ def generate_local_chars(attribute_pool, overall_amplitude, seq_len):
 
             # Apply the current change
             y = change_obj.apply_change(y, seq_len, overall_amplitude)
-            if change_obj.position_end >= seq_len:
+            if change_obj.position_end > seq_len:
                 raise ValueError(f"Change exceeds sequence length: {change_obj.position_end} >= {seq_len}. This should never happend! ({change_obj.type=}, {change_obj.position_start=}, {change_obj.amplitude=})")
             local_char.update({
                 "position_start": change_obj.position_start,
-                "position_end": change_obj.position_end,
+                "position_end": _inclusive_end_point(change_obj.position_end, seq_len),
                 "amplitude": change_obj.amplitude,
                 "detail": change_obj.detail
             })
